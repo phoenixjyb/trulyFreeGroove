@@ -1,5 +1,7 @@
 package com.trulyfreemusic.opengroove.radio
 
+import com.trulyfreemusic.opengroove.SharedPlaybackPolicy
+
 data class RadioStation(
     val id: String,
     val name: String,
@@ -18,8 +20,7 @@ data class RadioStation(
     val isHls: Boolean = false,
 ) {
     fun isPlayable(): Boolean =
-        id.isNotBlank() && name.isNotBlank() &&
-            (streamUrl.startsWith("https://") || streamUrl.startsWith("http://"))
+        SharedPlaybackPolicy.isRadioStreamAllowed(id, name, streamUrl)
 }
 
 data class RadioCountry(
@@ -52,24 +53,9 @@ data class RadioUiState(
 )
 
 val RadioGenres = listOf(
-    "Pop",
-    "Rock",
-    "Jazz",
-    "Classical",
-    "Electronic",
-    "Hip Hop",
-    "Country",
-    "Blues",
-    "Reggae",
+    "Pop", "Rock", "Jazz", "Classical", "Electronic", "Hip Hop", "Country", "Blues", "Reggae",
 )
 
 val RadioCategories = listOf(
-    "News",
-    "Talk",
-    "Sports",
-    "Culture",
-    "Education",
-    "Kids",
-    "Religious",
-    "Community",
+    "News", "Talk", "Sports", "Culture", "Education", "Kids", "Religious", "Community",
 )

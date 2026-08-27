@@ -668,11 +668,12 @@ private fun CountryDialog(countries: List<RadioCountry>, onSelect: (RadioCountry
     )
 }
 
-private fun radioResultTitle(state: RadioUiState): String = when {
-    state.selectedCountry != null -> "${countryFlag(state.selectedCountry.code)} ${state.selectedCountry.name}"
-    state.selectedTag != null -> state.selectedTag
-    state.query.isNotBlank() -> "Results for “${state.query}”"
-    else -> "Popular stations"
+private fun radioResultTitle(state: RadioUiState): String {
+    state.selectedCountry?.let { country ->
+        return "${countryFlag(country.code)} ${country.name}"
+    }
+    state.selectedTag?.let { return it }
+    return if (state.query.isNotBlank()) "Results for “${state.query}”" else "Popular stations"
 }
 
 private fun stationTechnicalLine(station: RadioStation): String = buildList {

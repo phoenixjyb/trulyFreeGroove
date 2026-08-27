@@ -9,13 +9,6 @@ import java.net.URL
 import java.net.URLEncoder
 import org.json.JSONObject
 
-enum class SearchLanguage(val label: String, val jamendoCode: String?, val searchHint: String) {
-    ALL("All", null, ""),
-    ENGLISH("English", "en", "English"),
-    CHINESE("国语 / 中文", "zh", "中文"),
-    CANTONESE("粤语 / Cantonese", "zh", "粤语 Cantonese"),
-}
-
 class JamendoCatalog(private val clientId: String) {
     fun search(query: String, language: SearchLanguage): List<Track> {
         require(clientId.isNotBlank()) { "A Jamendo client ID is required." }

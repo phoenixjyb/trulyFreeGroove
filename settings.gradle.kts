@@ -7,7 +7,8 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    // Kotlin/Native adds its compiler distribution as an Ivy repository when iOS targets are present.
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
         google()
         mavenCentral()
@@ -16,3 +17,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "OpenGroove"
 include(":app")
+include(":shared")

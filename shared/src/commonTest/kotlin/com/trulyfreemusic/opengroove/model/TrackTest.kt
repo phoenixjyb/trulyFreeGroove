@@ -1,8 +1,8 @@
 package com.trulyfreemusic.opengroove.model
 
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class TrackTest {
     private fun track(
@@ -23,12 +23,15 @@ class TrackTest {
         playbackMode = mode,
     )
 
-    @Test fun authorizedHttpsTrackCanPlay() = assertTrue(track().isDirectPlaybackAllowed())
+    @Test
+    fun authorizedHttpsTrackCanPlay() = assertTrue(track().isDirectPlaybackAllowed())
 
-    @Test fun externalProviderCannotBePlayedDirectly() =
+    @Test
+    fun externalProviderCannotBePlayedDirectly() =
         assertFalse(track(mode = PlaybackMode.EXTERNAL_ONLY).isDirectPlaybackAllowed())
 
-    @Test fun cleartextOrUnlicensedTrackCannotPlay() {
+    @Test
+    fun cleartextOrUnlicensedTrackCannotPlay() {
         assertFalse(track(stream = "http://media.example/song.mp3").isDirectPlaybackAllowed())
         assertFalse(track(license = "").isDirectPlaybackAllowed())
     }

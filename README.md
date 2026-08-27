@@ -1,6 +1,8 @@
 # OpenGroove
 
-OpenGroove is a small Android music, internet-radio, and podcast app designed around a simple rule: media is played in-app only from a provider, broadcaster, or publisher URL intended for that playback. Major commercial music platforms are opened through their official app or website.
+OpenGroove is an Android and iOS music, internet-radio, and podcast project designed around a simple rule: media is played in-app only from a provider, broadcaster, or publisher URL intended for that playback. Major commercial music platforms are opened through their official app or website.
+
+This repository now contains the existing Android app, a native SwiftUI iOS counterpart, and a Kotlin Multiplatform `shared` module for domain models and the playback-policy boundary. New product behavior should be added to the shared contract first and then completed against both platform gates in [docs/feature-parity.md](docs/feature-parity.md).
 
 ## What works
 
@@ -67,6 +69,12 @@ Requirements: JDK 17 and Android SDK 36.
    ```
 
 Jamendo is optional. Without a client ID, the app still searches and streams license-explicit audio from Wikimedia Commons. No third-party test credential is bundled.
+
+## iOS development
+
+The iOS source is under `iosApp`. Its first parity slice provides Radio Browser search and browsing, saved stations, AVPlayer/HLS playback, a dedicated player, previous/next switching, background-audio configuration, and Control Center/lock-screen commands.
+
+Full Xcode and XcodeGen are required to generate and build the iPhone application. See [iosApp/README.md](iosApp/README.md). The Swift source and radio core can still be type-checked and smoke-tested with Apple Command Line Tools, but that is not an iPhone build or physical-device acceptance.
 
 ## Provider contract
 
