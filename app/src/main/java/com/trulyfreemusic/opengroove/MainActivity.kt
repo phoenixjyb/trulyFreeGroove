@@ -1,6 +1,7 @@
 package com.trulyfreemusic.opengroove
 
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -39,6 +40,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
@@ -70,6 +72,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -90,13 +94,29 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.common.Timeline
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionResult
+import androidx.media3.session.SessionToken
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import com.trulyfreemusic.opengroove.model.Track
 import com.trulyfreemusic.opengroove.data.SearchLanguage
+import com.trulyfreemusic.opengroove.playback.PlaybackCommands
+import com.trulyfreemusic.opengroove.playback.PlaybackService
+import com.trulyfreemusic.opengroove.playback.toMediaItem
+import com.trulyfreemusic.opengroove.playback.toPodcastEpisodeOrNull
+import com.trulyfreemusic.opengroove.playback.toRadioStationOrNull
+import com.trulyfreemusic.opengroove.playback.toTrackOrNull
+import com.trulyfreemusic.opengroove.podcast.PodcastBrowseScreen
+import com.trulyfreemusic.opengroove.podcast.PodcastEpisode
+import com.trulyfreemusic.opengroove.podcast.PodcastMiniPlayer
+import com.trulyfreemusic.opengroove.podcast.PodcastPlayerScreen
+import com.trulyfreemusic.opengroove.podcast.podcastSleepDurationMs
 import com.trulyfreemusic.opengroove.radio.RadioBrowseScreen
 import com.trulyfreemusic.opengroove.radio.RadioMiniPlayer
 import com.trulyfreemusic.opengroove.radio.RadioPlayerScreen
@@ -166,7 +186,7 @@ private fun OpenGrooveTheme(content: @Composable () -> Unit) {
     )
 }
 
-private enum class AppSection { DISCOVER, RADIO, LIBRARY }
+private enum class AppSection { DISCOVER, RADIO, PODCASTS, LIBRARY }
 
 @Composable
 private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
@@ -175,46 +195,180 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val radioState by viewModel.radioState.collectAsStateWithLifecycle()
     val savedStations by viewModel.savedStations.collectAsStateWithLifecycle()
+    val recentStations by viewModel.recentStations.collectAsStateWithLifecycle()
+    val podcastState by viewModel.podcastState.collectAsStateWithLifecycle()
+    val podcastSubscriptions by viewModel.podcastSubscriptions.collectAsStateWithLifecycle()
+    val unplayedPodcastEpisodes by viewModel.unplayedPodcastEpisodes.collectAsStateWithLifecycle()
     var section by remember { mutableStateOf(AppSection.DISCOVER) }
     var addTrack by remember { mutableStateOf<Track?>(null) }
     var showCreatePlaylist by remember { mutableStateOf(false) }
     var currentTrack by remember { mutableStateOf<Track?>(null) }
     var currentStation by remember { mutableStateOf<RadioStation?>(null) }
+    var currentPodcast by remember { mutableStateOf<PodcastEpisode?>(null) }
     var radioQueue by remember { mutableStateOf(emptyList<RadioStation>()) }
     var showRadioPlayer by remember { mutableStateOf(false) }
+    var showPodcastPlayer by remember { mutableStateOf(false) }
+    var podcastQueue by remember { mutableStateOf(emptyList<PodcastEpisode>()) }
+    var podcastQueueIndex by remember { mutableIntStateOf(-1) }
+    var playbackSpeed by remember { mutableFloatStateOf(1f) }
+    var sleepTimerEndAtMs by remember { mutableLongStateOf(0L) }
     var playerError by remember { mutableStateOf<String?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
+    var isBuffering by remember { mutableStateOf(false) }
     var positionMs by remember { mutableLongStateOf(0L) }
     var durationMs by remember { mutableLongStateOf(1L) }
-    val player = remember { ExoPlayer.Builder(context).build() }
+    var player by remember { mutableStateOf<MediaController?>(null) }
 
-    DisposableEffect(player) {
-        val listener = object : Player.Listener {
-            override fun onIsPlayingChanged(playing: Boolean) {
-                isPlaying = playing
-            }
-
-            override fun onPlayerError(error: PlaybackException) {
-                playerError = "This stream is unavailable right now. Try the next station."
-            }
-
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_READY) playerError = null
+    fun reflectPodcastQueue(controller: Player) {
+        podcastQueue = buildList {
+            for (index in 0 until controller.mediaItemCount) {
+                controller.getMediaItemAt(index).toPodcastEpisodeOrNull()?.let(::add)
             }
         }
-        player.addListener(listener)
-        onDispose {
-            player.removeListener(listener)
-            player.release()
+        podcastQueueIndex = if (podcastQueue.isEmpty()) -1 else controller.currentMediaItemIndex
+    }
+
+    fun querySleepTimer(controller: MediaController) {
+        val resultFuture = controller.sendCustomCommand(PlaybackCommands.getSleepTimer, Bundle.EMPTY)
+        resultFuture.addListener(
+            {
+                runCatching { resultFuture.get() }.onSuccess { result ->
+                    if (result.resultCode == SessionResult.RESULT_SUCCESS) {
+                        sleepTimerEndAtMs = result.extras.getLong(PlaybackCommands.EXTRA_END_AT_MS)
+                    }
+                }
+            },
+            ContextCompat.getMainExecutor(context),
+        )
+    }
+
+    fun reflectMediaItem(mediaItem: MediaItem?) {
+        val track = mediaItem?.toTrackOrNull()
+        val station = mediaItem?.toRadioStationOrNull()
+        val podcast = mediaItem?.toPodcastEpisodeOrNull()
+        when {
+            mediaItem == null -> {
+                currentTrack = null
+                currentStation = null
+                currentPodcast = null
+            }
+            track != null -> {
+                currentTrack = track
+                currentStation = null
+                currentPodcast = null
+                showRadioPlayer = false
+                showPodcastPlayer = false
+            }
+            station != null -> {
+                currentTrack = null
+                currentStation = station
+                currentPodcast = null
+                showPodcastPlayer = false
+            }
+            podcast != null -> {
+                currentTrack = null
+                currentStation = null
+                currentPodcast = podcast
+                showRadioPlayer = false
+            }
         }
     }
 
-    LaunchedEffect(isPlaying, currentTrack) {
-        while (currentTrack != null) {
-            positionMs = player.currentPosition.coerceAtLeast(0L)
-            if (player.duration > 0L) durationMs = player.duration
-            delay(if (isPlaying) 500 else 1_000)
+    DisposableEffect(context) {
+        val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+        val controllerFuture = MediaController.Builder(context, token).buildAsync()
+        controllerFuture.addListener(
+            {
+                runCatching { controllerFuture.get() }
+                    .onSuccess { controller ->
+                        reflectMediaItem(controller.currentMediaItem)
+                        isPlaying = controller.isPlaying
+                        isBuffering = controller.playbackState == Player.STATE_BUFFERING
+                        playbackSpeed = controller.playbackParameters.speed
+                        reflectPodcastQueue(controller)
+                        querySleepTimer(controller)
+                        player = controller
+                    }
+                    .onFailure {
+                        playerError = "The playback service could not start. Reopen OpenGroove and try again."
+                    }
+            },
+            ContextCompat.getMainExecutor(context),
+        )
+        onDispose {
+            player = null
+            MediaController.releaseFuture(controllerFuture)
         }
+    }
+
+    DisposableEffect(player) {
+        val activePlayer = player ?: return@DisposableEffect onDispose { }
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(playing: Boolean) {
+                isPlaying = playing
+                if (!playing) {
+                    currentPodcast?.let { episode ->
+                        viewModel.updatePodcastProgress(
+                            episode.episodeId,
+                            activePlayer.currentPosition,
+                            activePlayer.duration,
+                        )
+                    }
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                playerError = when {
+                    currentStation != null -> "This stream is unavailable right now. Retry it or try the next station."
+                    currentPodcast != null -> "This podcast episode is unavailable from its publisher right now."
+                    else -> "This track is unavailable right now."
+                }
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                isBuffering = playbackState == Player.STATE_BUFFERING
+                if (playbackState == Player.STATE_READY) playerError = null
+            }
+
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                reflectMediaItem(mediaItem)
+                reflectPodcastQueue(activePlayer)
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                reflectPodcastQueue(activePlayer)
+            }
+
+            override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+                playbackSpeed = playbackParameters.speed
+            }
+        }
+        activePlayer.addListener(listener)
+        onDispose {
+            activePlayer.removeListener(listener)
+        }
+    }
+
+    LaunchedEffect(isPlaying, currentTrack, currentPodcast, player) {
+        val activePlayer = player ?: return@LaunchedEffect
+        var progressTicks = 0
+        while (currentTrack != null || currentPodcast != null) {
+            positionMs = activePlayer.currentPosition.coerceAtLeast(0L)
+            if (activePlayer.duration > 0L) durationMs = activePlayer.duration
+            currentPodcast?.let { episode ->
+                if (progressTicks % 5 == 0) {
+                    viewModel.updatePodcastProgress(episode.episodeId, positionMs, durationMs)
+                }
+            }
+            progressTicks++
+            delay(if (isPlaying) 1_000 else 2_000)
+        }
+    }
+
+    fun savePodcastProgress() {
+        val episode = currentPodcast ?: return
+        val activePlayer = player ?: return
+        viewModel.updatePodcastProgress(episode.episodeId, activePlayer.currentPosition, activePlayer.duration)
     }
 
     fun play(track: Track) {
@@ -222,44 +376,163 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
             context.openUrl(track.sourceUrl)
             return
         }
+        val activePlayer = player
+        if (activePlayer == null) {
+            playerError = "The player is still starting. Try again in a moment."
+            return
+        }
+        savePodcastProgress()
         currentTrack = track
         currentStation = null
+        currentPodcast = null
         showRadioPlayer = false
+        showPodcastPlayer = false
         playerError = null
         positionMs = 0L
         durationMs = (track.durationSeconds * 1_000L).coerceAtLeast(1L)
         try {
-            player.setMediaItem(MediaItem.fromUri(track.streamUrl))
-            player.prepare()
-            player.play()
+            activePlayer.setMediaItem(track.toMediaItem())
+            activePlayer.setPlaybackSpeed(1f)
+            activePlayer.prepare()
+            activePlayer.play()
         } catch (_: RuntimeException) {
-            player.stop()
-            player.clearMediaItems()
+            activePlayer.stop()
+            activePlayer.clearMediaItems()
             playerError = "This track cannot be played on this device."
         }
     }
 
     fun playStation(station: RadioStation) {
         if (!station.isPlayable()) return
+        val activePlayer = player
+        if (activePlayer == null) {
+            playerError = "The player is still starting. Try again in a moment."
+            return
+        }
+        savePodcastProgress()
         currentTrack = null
         currentStation = station
+        currentPodcast = null
+        showPodcastPlayer = false
         playerError = null
         radioQueue = when {
             radioState.stations.any { it.id == station.id } -> radioState.stations
             savedStations.any { it.id == station.id } -> savedStations
+            recentStations.any { it.id == station.id } -> recentStations
             else -> listOf(station)
         }
         showRadioPlayer = true
         try {
-            player.setMediaItem(MediaItem.fromUri(station.streamUrl))
-            player.prepare()
-            player.play()
+            activePlayer.setMediaItem(station.toMediaItem())
+            activePlayer.setPlaybackSpeed(1f)
+            activePlayer.prepare()
+            activePlayer.play()
             viewModel.registerStationClick(station.id)
+            viewModel.recordRecentStation(station)
         } catch (_: RuntimeException) {
-            player.stop()
-            player.clearMediaItems()
+            activePlayer.stop()
+            activePlayer.clearMediaItems()
             playerError = "This station uses a stream format that is not available right now. Try another station."
         }
+    }
+
+    fun playPodcast(episode: PodcastEpisode) {
+        if (!episode.isPlayable()) return
+        val activePlayer = player
+        if (activePlayer == null) {
+            playerError = "The player is still starting. Try again in a moment."
+            return
+        }
+        savePodcastProgress()
+        currentTrack = null
+        currentStation = null
+        currentPodcast = episode
+        showRadioPlayer = false
+        showPodcastPlayer = true
+        playerError = null
+        positionMs = episode.positionMs.coerceAtLeast(0L)
+        durationMs = episode.durationMs.coerceAtLeast(1L)
+        try {
+            activePlayer.setMediaItem(episode.toMediaItem())
+            activePlayer.prepare()
+            if (episode.positionMs > 0L) activePlayer.seekTo(episode.positionMs)
+            activePlayer.play()
+        } catch (_: RuntimeException) {
+            activePlayer.stop()
+            activePlayer.clearMediaItems()
+            playerError = "This publisher audio stream cannot be played on this device."
+        }
+    }
+
+    fun addPodcastToQueue(episode: PodcastEpisode) {
+        val activePlayer = player
+        if (activePlayer == null) {
+            playerError = "The player is still starting. Try again in a moment."
+            return
+        }
+        if (currentPodcast == null || activePlayer.mediaItemCount == 0) {
+            playPodcast(episode)
+            return
+        }
+        if (podcastQueue.any { it.episodeId == episode.episodeId }) return
+        activePlayer.addMediaItem(episode.toMediaItem())
+    }
+
+    fun setPodcastSpeed(speed: Float) {
+        if (currentPodcast == null || speed !in 0.5f..2f) return
+        player?.setPlaybackSpeed(speed)
+    }
+
+    fun setSleepTimer(minutes: Int?) {
+        val activePlayer = player ?: return
+        val sleepDurationMs = runCatching { podcastSleepDurationMs(minutes) }.getOrElse { return }
+        val resultFuture = activePlayer.sendCustomCommand(
+            PlaybackCommands.setSleepTimer,
+            PlaybackCommands.timerArguments(sleepDurationMs),
+        )
+        resultFuture.addListener(
+            {
+                runCatching { resultFuture.get() }
+                    .onSuccess { result ->
+                        if (result.resultCode == SessionResult.RESULT_SUCCESS) {
+                            sleepTimerEndAtMs = result.extras.getLong(PlaybackCommands.EXTRA_END_AT_MS)
+                        } else {
+                            playerError = "The sleep timer is unavailable in this playback session."
+                        }
+                    }
+                    .onFailure { playerError = "The sleep timer could not be changed." }
+            },
+            ContextCompat.getMainExecutor(context),
+        )
+    }
+
+    fun jumpToPodcast(index: Int) {
+        val activePlayer = player ?: return
+        if (index !in 0 until activePlayer.mediaItemCount) return
+        savePodcastProgress()
+        activePlayer.seekToDefaultPosition(index)
+        activePlayer.play()
+    }
+
+    fun removePodcastFromQueue(index: Int) {
+        val activePlayer = player ?: return
+        if (index !in 0 until activePlayer.mediaItemCount || index == activePlayer.currentMediaItemIndex) return
+        activePlayer.removeMediaItem(index)
+    }
+
+    fun togglePlayback() {
+        player?.let { if (it.isPlaying) it.pause() else it.play() }
+    }
+
+    fun retryStation(station: RadioStation) {
+        val activePlayer = player
+        if (activePlayer == null || activePlayer.mediaItemCount == 0) {
+            playStation(station)
+            return
+        }
+        playerError = null
+        activePlayer.prepare()
+        activePlayer.play()
     }
 
     fun switchStation(delta: Int) {
@@ -273,6 +546,12 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
     BackHandler(enabled = showRadioPlayer) {
         showRadioPlayer = false
     }
+    BackHandler(enabled = showPodcastPlayer) {
+        showPodcastPlayer = false
+    }
+    BackHandler(enabled = !showRadioPlayer && !showPodcastPlayer && podcastState.selectedShow != null) {
+        viewModel.closePodcast()
+    }
 
     Box(Modifier.fillMaxSize()) {
       Scaffold(
@@ -284,18 +563,33 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                     MiniPlayer(
                         track = track,
                         isPlaying = isPlaying,
+                        isBuffering = isBuffering,
                         positionMs = positionMs,
                         durationMs = durationMs,
-                        onSeek = player::seekTo,
-                        onToggle = { if (player.isPlaying) player.pause() else player.play() },
+                        onSeek = { player?.seekTo(it) },
+                        onToggle = ::togglePlayback,
                     )
                 }
                 currentStation?.let { station ->
                     RadioMiniPlayer(
                         station = station,
                         isPlaying = isPlaying,
+                        isBuffering = isBuffering,
                         onOpen = { showRadioPlayer = true },
-                        onToggle = { if (player.isPlaying) player.pause() else player.play() },
+                        onToggle = ::togglePlayback,
+                    )
+                }
+                currentPodcast?.let { episode ->
+                    PodcastMiniPlayer(
+                        episode = episode,
+                        isPlaying = isPlaying,
+                        isBuffering = isBuffering,
+                        positionMs = positionMs,
+                        durationMs = durationMs,
+                        error = playerError,
+                        onOpen = { showPodcastPlayer = true },
+                        onSeek = { player?.seekTo(it) },
+                        onToggle = ::togglePlayback,
                     )
                 }
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
@@ -312,10 +606,16 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                         label = { Text("Radio") },
                     )
                     NavigationBarItem(
+                        selected = section == AppSection.PODCASTS,
+                        onClick = { section = AppSection.PODCASTS },
+                        icon = { Icon(Icons.Rounded.Podcasts, contentDescription = null) },
+                        label = { Text("Podcasts") },
+                    )
+                    NavigationBarItem(
                         selected = section == AppSection.LIBRARY,
                         onClick = { section = AppSection.LIBRARY },
                         icon = { Icon(Icons.Rounded.LibraryMusic, contentDescription = null) },
-                        label = { Text("Playlists") },
+                        label = { Text("Library") },
                     )
                 }
             }
@@ -354,13 +654,34 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                 AppSection.RADIO -> RadioBrowseScreen(
                     state = radioState,
                     savedStations = savedStations,
+                    recentStations = recentStations,
                     onQueryChange = viewModel::setRadioQuery,
                     onSearch = viewModel::searchRadio,
                     onCountry = viewModel::selectRadioCountry,
                     onTag = viewModel::selectRadioTag,
                     onClearFilters = viewModel::clearRadioFilters,
                     onToggleSaved = viewModel::toggleSavedStation,
+                    onClearRecent = viewModel::clearRecentStations,
+                    onLoadMore = viewModel::loadMoreRadio,
                     onPlay = ::playStation,
+                )
+                AppSection.PODCASTS -> PodcastBrowseScreen(
+                    state = podcastState,
+                    subscriptions = podcastSubscriptions,
+                    unplayedEpisodes = unplayedPodcastEpisodes,
+                    onQueryChange = viewModel::setPodcastQuery,
+                    onLibraryQueryChange = viewModel::setPodcastLibraryQuery,
+                    onLanguageChange = viewModel::setPodcastLanguage,
+                    onSearch = viewModel::searchPodcasts,
+                    onAddFeed = viewModel::addPodcastFeed,
+                    onSelectShow = viewModel::selectPodcast,
+                    onBack = viewModel::closePodcast,
+                    onRefresh = viewModel::refreshSelectedPodcast,
+                    onToggleSubscribe = viewModel::togglePodcastSubscription,
+                    onPlay = ::playPodcast,
+                    onQueue = ::addPodcastToQueue,
+                    onTogglePlayed = viewModel::togglePodcastPlayed,
+                    onOpen = context::openUrl,
                 )
                 AppSection.LIBRARY -> LibraryScreen(
                     playlists = playlists,
@@ -378,13 +699,38 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
               station = station,
               saved = savedStations.any { it.id == station.id },
               isPlaying = isPlaying,
+              isBuffering = isBuffering,
               error = playerError,
               onBack = { showRadioPlayer = false },
-              onToggle = { if (player.isPlaying) player.pause() else player.play() },
+              onToggle = ::togglePlayback,
+              onRetry = { retryStation(station) },
               onPrevious = { switchStation(-1) },
               onNext = { switchStation(1) },
               onToggleSaved = { viewModel.toggleSavedStation(station) },
               onHomepage = { context.openUrl(station.homepageUrl) },
+          )
+      }
+      currentPodcast?.takeIf { showPodcastPlayer }?.let { episode ->
+          PodcastPlayerScreen(
+              episode = episode,
+              queue = podcastQueue,
+              currentIndex = podcastQueueIndex,
+              isPlaying = isPlaying,
+              isBuffering = isBuffering,
+              positionMs = positionMs,
+              durationMs = durationMs,
+              playbackSpeed = playbackSpeed,
+              sleepTimerEndAtMs = sleepTimerEndAtMs,
+              error = playerError,
+              onBack = { showPodcastPlayer = false },
+              onToggle = ::togglePlayback,
+              onSeek = { player?.seekTo(it) },
+              onPrevious = { player?.seekToPreviousMediaItem() },
+              onNext = { player?.seekToNextMediaItem() },
+              onSpeed = ::setPodcastSpeed,
+              onSleepTimer = ::setSleepTimer,
+              onJumpTo = ::jumpToPodcast,
+              onRemove = ::removePodcastFromQueue,
           )
       }
     }
@@ -735,6 +1081,7 @@ private fun PlaylistTrackRow(track: Track, onPlay: () -> Unit, onRemove: () -> U
 private fun MiniPlayer(
     track: Track,
     isPlaying: Boolean,
+    isBuffering: Boolean,
     positionMs: Long,
     durationMs: Long,
     onSeek: (Long) -> Unit,
@@ -764,7 +1111,11 @@ private fun MiniPlayer(
                     Text(track.artist, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 FilledIconButton(onClick = onToggle) {
-                    Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = "Play or pause")
+                    if (isBuffering) {
+                        CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
+                    } else {
+                        Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = "Play or pause")
+                    }
                 }
             }
         }

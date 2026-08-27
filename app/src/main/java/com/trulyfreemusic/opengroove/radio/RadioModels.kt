@@ -13,6 +13,9 @@ data class RadioStation(
     val codec: String,
     val bitrate: Int,
     val votes: Int,
+    val isOnline: Boolean = true,
+    val lastCheckedAt: String = "",
+    val isHls: Boolean = false,
 ) {
     fun isPlayable(): Boolean =
         id.isNotBlank() && name.isNotBlank() &&
@@ -31,6 +34,7 @@ enum class RadioBrowseMode {
     GENRE,
     CATEGORY,
     SAVED,
+    RECENT,
 }
 
 data class RadioUiState(
@@ -41,6 +45,9 @@ data class RadioUiState(
     val selectedTag: String? = null,
     val mode: RadioBrowseMode = RadioBrowseMode.ALL,
     val isLoading: Boolean = false,
+    val isLoadingMore: Boolean = false,
+    val nextOffset: Int = 0,
+    val hasMore: Boolean = true,
     val error: String? = null,
 )
 
