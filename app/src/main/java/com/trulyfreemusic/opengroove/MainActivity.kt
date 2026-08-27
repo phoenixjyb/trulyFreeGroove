@@ -10,6 +10,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,9 +63,12 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -77,6 +81,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -88,6 +93,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import com.trulyfreemusic.opengroove.model.Track
 import com.trulyfreemusic.opengroove.data.SearchLanguage
@@ -105,25 +111,57 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val Ink = Color(0xFF120F1C)
-private val Panel = Color(0xFF201A2E)
-private val Violet = Color(0xFF9B84FF)
-private val Cream = Color(0xFFFFF3C4)
-private val Coral = Color(0xFFFF8066)
+private val DarkColorScheme = darkColorScheme(
+    primary = Color(0xFFFFF3C4),
+    onPrimary = Color(0xFF241F10),
+    secondary = Color(0xFFBCAEFF),
+    onSecondary = Color(0xFF2D2360),
+    tertiary = Color(0xFF8FFFC1),
+    onTertiary = Color(0xFF003823),
+    background = Color(0xFF120F1C),
+    onBackground = Color(0xFFF5F1FF),
+    surface = Color(0xFF201A2E),
+    onSurface = Color(0xFFF5F1FF),
+    surfaceVariant = Color(0xFF2A2238),
+    onSurfaceVariant = Color(0xFFD2C8DA),
+    error = Color(0xFFFFB4AB),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
+    outlineVariant = Color(0xFF4B4451),
+)
+
+private val LightColorScheme = lightColorScheme(
+    primary = Color(0xFF5E46C8),
+    onPrimary = Color.White,
+    secondary = Color(0xFF00658A),
+    onSecondary = Color.White,
+    tertiary = Color(0xFF006C4C),
+    onTertiary = Color.White,
+    background = Color(0xFFFFF9FF),
+    onBackground = Color(0xFF1D1A20),
+    surface = Color(0xFFFFF9FF),
+    onSurface = Color(0xFF1D1A20),
+    surfaceVariant = Color(0xFFECE6F0),
+    onSurfaceVariant = Color(0xFF49454F),
+    error = Color(0xFFBA1A1A),
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF410002),
+    outlineVariant = Color(0xFFCAC4D0),
+)
 
 @Composable
 private fun OpenGrooveTheme(content: @Composable () -> Unit) {
+    val darkTheme = isSystemInDarkTheme()
+    val view = LocalView.current
+    SideEffect {
+        val activity = view.context as? MainActivity ?: return@SideEffect
+        WindowCompat.getInsetsController(activity.window, view).apply {
+            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightNavigationBars = !darkTheme
+        }
+    }
     MaterialTheme(
-        colorScheme = androidx.compose.material3.darkColorScheme(
-            primary = Cream,
-            onPrimary = Ink,
-            secondary = Violet,
-            tertiary = Coral,
-            background = Ink,
-            surface = Panel,
-            onBackground = Color(0xFFF5F1FF),
-            onSurface = Color(0xFFF5F1FF),
-        ),
+        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         content = content,
     )
 }
@@ -190,9 +228,15 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         playerError = null
         positionMs = 0L
         durationMs = (track.durationSeconds * 1_000L).coerceAtLeast(1L)
-        player.setMediaItem(MediaItem.fromUri(track.streamUrl))
-        player.prepare()
-        player.play()
+        try {
+            player.setMediaItem(MediaItem.fromUri(track.streamUrl))
+            player.prepare()
+            player.play()
+        } catch (_: RuntimeException) {
+            player.stop()
+            player.clearMediaItems()
+            playerError = "This track cannot be played on this device."
+        }
     }
 
     fun playStation(station: RadioStation) {
@@ -206,10 +250,16 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
             else -> listOf(station)
         }
         showRadioPlayer = true
-        player.setMediaItem(MediaItem.fromUri(station.streamUrl))
-        player.prepare()
-        player.play()
-        viewModel.registerStationClick(station.id)
+        try {
+            player.setMediaItem(MediaItem.fromUri(station.streamUrl))
+            player.prepare()
+            player.play()
+            viewModel.registerStationClick(station.id)
+        } catch (_: RuntimeException) {
+            player.stop()
+            player.clearMediaItems()
+            playerError = "This station uses a stream format that is not available right now. Try another station."
+        }
     }
 
     fun switchStation(delta: Int) {
@@ -248,7 +298,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                         onToggle = { if (player.isPlaying) player.pause() else player.play() },
                     )
                 }
-                NavigationBar(containerColor = Ink) {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     NavigationBarItem(
                         selected = section == AppSection.DISCOVER,
                         onClick = { section = AppSection.DISCOVER },
@@ -276,7 +326,11 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color(0xFF2B1D4A), Ink, Ink),
+                        listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.background,
+                        ),
                         endY = 900f,
                     ),
                 )
@@ -381,7 +435,7 @@ private fun DiscoverScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text("OpenGroove", fontSize = 32.sp, fontWeight = FontWeight.Black, color = Cream)
+            Text("OpenGroove", fontSize = 32.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
             Text(
                 "Music with a clear source.",
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
@@ -408,15 +462,15 @@ private fun DiscoverScreen(
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                     )
-                    Text("Wikimedia Commons + Jamendo • license shown per track", fontSize = 12.sp, color = Violet)
+                    Text("Wikimedia Commons + Jamendo • license shown per track", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
                 }
                 if (isLoading) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
             }
         }
         error?.let { message ->
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = Coral.copy(alpha = 0.14f))) {
-                    Text(message, modifier = Modifier.padding(14.dp), color = Color(0xFFFFB5A6))
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                    Text(message, modifier = Modifier.padding(14.dp), color = MaterialTheme.colorScheme.onErrorContainer)
                 }
             }
         }
@@ -514,9 +568,9 @@ private fun ProviderButton(label: String, onClick: () -> Unit) {
 
 @Composable
 private fun CatalogNotice() {
-    Card(colors = CardDefaults.cardColors(containerColor = Violet.copy(alpha = 0.12f))) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.Top) {
-            Icon(Icons.Rounded.Info, contentDescription = null, tint = Violet)
+            Icon(Icons.Rounded.Info, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
             Spacer(Modifier.width(8.dp))
             Text(
                 "Wikimedia Commons is active. Add your own Jamendo client ID to expand the open-music catalog.",
@@ -535,7 +589,7 @@ private fun TrackCard(
     onOpen: (String) -> Unit,
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = 0.94f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(18.dp),
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -556,13 +610,13 @@ private fun TrackCard(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = Violet, modifier = Modifier.size(13.dp))
+                    Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(13.dp))
                     Spacer(Modifier.width(4.dp))
                     Text(
                         listOf(track.providerName, formatDuration(track.durationSeconds))
                             .filter(String::isNotBlank)
                             .joinToString(" • "),
-                        color = Violet,
+                        color = MaterialTheme.colorScheme.secondary,
                         fontSize = 11.sp,
                     )
                 }
@@ -571,14 +625,14 @@ private fun TrackCard(
                         "License",
                         modifier = Modifier.clickable { onOpen(track.licenseUrl) }.padding(vertical = 5.dp),
                         fontSize = 11.sp,
-                        color = Cream,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                     Spacer(Modifier.width(12.dp))
                     Text(
                         "Source",
                         modifier = Modifier.clickable { onOpen(track.sourceUrl) }.padding(vertical = 5.dp),
                         fontSize = 11.sp,
-                        color = Cream,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -608,7 +662,7 @@ private fun LibraryScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Your playlists", fontSize = 30.sp, fontWeight = FontWeight.Black, color = Cream)
+                    Text("Your playlists", fontSize = 30.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                     Text("Saved only on this device", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
                 }
                 FilledIconButton(onClick = onCreate) {
@@ -618,9 +672,9 @@ private fun LibraryScreen(
         }
         if (playlists.isEmpty()) {
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Rounded.LibraryMusic, contentDescription = null, Modifier.size(42.dp), tint = Violet)
+                        Icon(Icons.Rounded.LibraryMusic, contentDescription = null, Modifier.size(42.dp), tint = MaterialTheme.colorScheme.secondary)
                         Spacer(Modifier.height(8.dp))
                         Text("Start your first playlist", fontWeight = FontWeight.Bold)
                         Text("Create one, then add any licensed track you discover.", fontSize = 13.sp)
@@ -634,7 +688,7 @@ private fun LibraryScreen(
             item(key = "header:$name") {
                 Column {
                     Text(name, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-                    Text("${tracks.size} ${if (tracks.size == 1) "track" else "tracks"}", fontSize = 12.sp, color = Violet)
+                    Text("${tracks.size} ${if (tracks.size == 1) "track" else "tracks"}", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
                 }
             }
             if (tracks.isEmpty()) {
@@ -650,7 +704,7 @@ private fun LibraryScreen(
                     onOpen = { onOpen(track.sourceUrl) },
                 )
             }
-            item(key = "divider:$name") { HorizontalDivider(color = Color.White.copy(alpha = 0.08f)) }
+            item(key = "divider:$name") { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
         }
     }
 }
@@ -686,7 +740,7 @@ private fun MiniPlayer(
     onSeek: (Long) -> Unit,
     onToggle: () -> Unit,
 ) {
-    Surface(color = Color(0xFF2A2238), tonalElevation = 8.dp) {
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 8.dp) {
         Column {
             Slider(
                 value = positionMs.coerceAtMost(durationMs).toFloat(),
@@ -735,7 +789,7 @@ private fun AddToPlaylistDialog(
                     Surface(
                         modifier = Modifier.fillMaxWidth().clickable { onAdd(name) },
                         shape = RoundedCornerShape(12.dp),
-                        color = Violet.copy(alpha = 0.12f),
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
                     ) {
                         Text(name, Modifier.padding(14.dp), fontWeight = FontWeight.SemiBold)
                     }

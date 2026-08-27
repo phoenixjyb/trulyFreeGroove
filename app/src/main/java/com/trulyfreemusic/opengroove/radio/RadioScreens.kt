@@ -74,11 +74,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 
-private val RadioInk = Color(0xFF0A1020)
-private val RadioBlue = Color(0xFF53C8FF)
-private val RadioMint = Color(0xFF8FFFC1)
-private val RadioPanel = Color(0xFF172238)
-
 @Composable
 fun RadioBrowseScreen(
     state: RadioUiState,
@@ -106,14 +101,14 @@ fun RadioBrowseScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(9.dp).clip(CircleShape).background(RadioMint))
+                        Box(Modifier.size(9.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
                         Spacer(Modifier.width(8.dp))
-                        Text("LIVE DIRECTORY", color = RadioMint, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("INTERNET DIRECTORY", color = MaterialTheme.colorScheme.tertiary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
-                    Text("Internet Radio", fontSize = 32.sp, fontWeight = FontWeight.Black, color = Color(0xFFEAF7FF))
-                    Text("Stations from around the world", color = Color.White.copy(alpha = 0.62f))
+                    Text("Internet Radio", fontSize = 32.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onBackground)
+                    Text("Stations from around the world", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Icon(Icons.Rounded.Radio, contentDescription = null, tint = RadioBlue, modifier = Modifier.size(44.dp))
+                Icon(Icons.Rounded.Radio, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(44.dp))
             }
             Spacer(Modifier.height(18.dp))
             RadioSearchField(state.query, onQueryChange, onSearch)
@@ -195,7 +190,7 @@ fun RadioBrowseScreen(
                     )
                     Text(
                         if (savedOnly) "Saved list works without lookup • streams need internet" else "Internet streams • availability can change",
-                        color = RadioBlue,
+                        color = MaterialTheme.colorScheme.secondary,
                         fontSize = 12.sp,
                     )
                 }
@@ -205,17 +200,17 @@ fun RadioBrowseScreen(
 
         if (!savedOnly) state.error?.let { message ->
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFF8066).copy(alpha = 0.14f))) {
-                    Text(message, Modifier.padding(14.dp), color = Color(0xFFFFB5A6))
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                    Text(message, Modifier.padding(14.dp), color = MaterialTheme.colorScheme.onErrorContainer)
                 }
             }
         }
 
         if (savedOnly && visibleStations.isEmpty()) {
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = RadioPanel)) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Rounded.FavoriteBorder, contentDescription = null, tint = RadioBlue, modifier = Modifier.size(42.dp))
+                        Icon(Icons.Rounded.FavoriteBorder, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(42.dp))
                         Spacer(Modifier.height(8.dp))
                         Text("No saved stations yet", fontWeight = FontWeight.Bold)
                         Text("Tap the heart beside any station to keep it here.", fontSize = 13.sp)
@@ -327,7 +322,7 @@ private fun StationCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onPlay),
-        colors = CardDefaults.cardColors(containerColor = RadioPanel.copy(alpha = 0.94f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(18.dp),
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -337,14 +332,14 @@ private fun StationCard(
                 Text(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     listOf(station.country, station.language).filter(String::isNotBlank).joinToString(" • "),
-                    color = Color.White.copy(alpha = 0.62f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     stationTechnicalLine(station),
-                    color = RadioBlue,
+                    color = MaterialTheme.colorScheme.secondary,
                     fontSize = 11.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -354,7 +349,7 @@ private fun StationCard(
                 Icon(
                     if (saved) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                     contentDescription = if (saved) "Remove saved station" else "Save station",
-                    tint = if (saved) Color(0xFFFF7794) else Color.White.copy(alpha = 0.72f),
+                    tint = if (saved) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             FilledIconButton(onClick = onPlay) { Icon(Icons.Rounded.PlayArrow, contentDescription = "Play station") }
@@ -376,12 +371,19 @@ fun RadioPlayerScreen(
     onHomepage: () -> Unit,
 ) {
     Box(
-        Modifier.fillMaxSize().background(
-            Brush.radialGradient(
-                colors = listOf(Color(0xFF194468), Color(0xFF15152B), RadioInk),
-                radius = 1_500f,
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.30f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                        Color.Transparent,
+                    ),
+                    radius = 1_500f,
+                ),
             ),
-        ),
     ) {
         Surface(
             modifier = Modifier
@@ -390,7 +392,8 @@ fun RadioPlayerScreen(
                 .padding(start = 14.dp, top = 8.dp)
                 .clip(CircleShape)
                 .clickable(onClick = onBack),
-            color = Color.Black.copy(alpha = 0.24f),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
             shape = CircleShape,
         ) {
             Row(
@@ -410,18 +413,27 @@ fun RadioPlayerScreen(
                 .padding(horizontal = 30.dp, vertical = 78.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Surface(color = RadioMint.copy(alpha = 0.14f), shape = CircleShape) {
+            Surface(color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.14f), shape = CircleShape) {
                 Row(Modifier.padding(horizontal = 13.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(8.dp).clip(CircleShape).background(if (isPlaying) RadioMint else Color.White.copy(alpha = 0.45f)))
+                    Box(
+                        Modifier.size(8.dp).clip(CircleShape).background(
+                            if (isPlaying) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
+                    )
                     Spacer(Modifier.width(7.dp))
-                    Text(if (isPlaying) "LIVE NOW" else "READY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = RadioMint)
+                    Text(
+                        if (isPlaying) "STREAMING" else "READY",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary,
+                    )
                 }
             }
             Spacer(Modifier.height(36.dp))
             Surface(
                 modifier = Modifier.size(230.dp),
                 shape = RoundedCornerShape(48.dp),
-                color = RadioPanel,
+                color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 18.dp,
             ) {
                 StationArtwork(station, 230)
@@ -432,7 +444,7 @@ fun RadioPlayerScreen(
                 fontSize = 30.sp,
                 lineHeight = 34.sp,
                 fontWeight = FontWeight.Black,
-                color = Color(0xFFEAF7FF),
+                color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -440,13 +452,13 @@ fun RadioPlayerScreen(
             Text(
                 listOf(countryFlag(station.countryCode), station.country, station.language)
                     .filter(String::isNotBlank).joinToString("  "),
-                color = Color.White.copy(alpha = 0.62f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
             )
-            Text(stationTechnicalLine(station), color = RadioBlue, fontSize = 12.sp)
+            Text(stationTechnicalLine(station), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
             error?.let {
                 Spacer(Modifier.height(12.dp))
-                Text(it, color = Color(0xFFFFA28F), fontSize = 12.sp)
+                Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
             }
             Spacer(Modifier.weight(1f))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp)) {
@@ -490,7 +502,7 @@ fun RadioMiniPlayer(
     onOpen: () -> Unit,
     onToggle: () -> Unit,
 ) {
-    Surface(color = Color(0xFF172238), tonalElevation = 8.dp) {
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 8.dp) {
         Row(
             Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(horizontal = 14.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -499,7 +511,7 @@ fun RadioMiniPlayer(
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("LIVE • ${station.country}", fontSize = 11.sp, color = RadioMint, maxLines = 1)
+                Text("STREAM • ${station.country}", fontSize = 11.sp, color = MaterialTheme.colorScheme.tertiary, maxLines = 1)
             }
             FilledIconButton(onClick = onToggle) {
                 Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = "Play or pause")
@@ -558,7 +570,7 @@ private fun CountryDialog(countries: List<RadioCountry>, onSelect: (RadioCountry
                             Text(countryFlag(country.code), fontSize = 22.sp)
                             Spacer(Modifier.width(10.dp))
                             Text(country.name, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(country.stationCount.toString(), color = RadioBlue, fontSize = 12.sp)
+                            Text(country.stationCount.toString(), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
                         }
                     }
                 }
