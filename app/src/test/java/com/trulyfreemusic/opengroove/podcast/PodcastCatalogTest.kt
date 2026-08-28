@@ -11,7 +11,12 @@ class PodcastCatalogTest {
         assertEquals(45_000L, parsePodcastDuration("45"))
         assertEquals(754_000L, parsePodcastDuration("12:34"))
         assertEquals(3_723_000L, parsePodcastDuration("1:02:03"))
+        assertEquals(90_500L, parsePodcastDuration("90.5"))
         assertEquals(0L, parsePodcastDuration("unknown"))
+        assertEquals(0L, parsePodcastDuration("1:bad:03"))
+        assertEquals(0L, parsePodcastDuration("1::03"))
+        assertEquals(0L, parsePodcastDuration("00:61"))
+        assertEquals(0L, parsePodcastDuration("1:60:00"))
     }
 
     @Test fun episodeIdentityIsStableAndFeedScoped() {
@@ -70,6 +75,22 @@ class PodcastCatalogTest {
         assertEquals(754_000L, feed.episodes.single().durationMs)
         assertEquals("Hello listeners", feed.episodes.single().description)
         assertTrue(feed.episodes.single().isPlayable())
+    }
+
+    @Test fun publisherRssPreservesTextInsideNestedMarkup() {
+        val xml = """
+            <rss><channel><title>Nested Notes</title><item><title>Episode</title>
+            <description>Hello <b>world</b> after</description>
+            <enclosure url="https://publisher.example/episode.mp3" type="audio/mpeg"/>
+            </item></channel></rss>
+        """.trimIndent()
+
+        val feed = PodcastFeedCatalog().parse(
+            xml.byteInputStream(),
+            "https://publisher.example/feed.xml",
+        )
+
+        assertEquals("Hello world after", feed.episodes.single().description)
     }
 
     @Test fun librarySearchMatchesEpisodeShowHostAndMultilingualText() {

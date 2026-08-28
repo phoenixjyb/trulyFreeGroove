@@ -17,6 +17,15 @@ Every product feature has one shared behavior contract and two platform acceptan
 | Podcast metadata refresh | Metadata-only, approximately 12-hour cadence | WorkManager periodic job | BGAppRefreshTask request; opportunistic system scheduling | Observe refresh on physical Android and iPhone under normal power/network conditions |
 | Theme | Product design tokens | System light/dark | System light/dark; simulator shell visually checked | Physical light/dark comparison |
 
+## Android reliability hardening evidence (2026-08-28)
+
+- Podcast completion now uses the shared rule requiring the later of 90% played or entry into the final 30 seconds; an unknown duration never completes an episode.
+- `PlaybackService` owns background-safe podcast progress checkpoints every 15 seconds and on pause, completion and episode transitions.
+- Publisher feeds preserve nested description text, reject malformed durations and responses larger than 8 MiB, and retain at most 250 episodes per feed.
+- Room retains at most ten unsubscribed podcast feed caches, while subscribed shows remain protected from pruning.
+- Android unit tests, lint and debug APK assembly pass locally: 28 tests, zero failures.
+- No emulator was used. The debug APK installed and launched without a fatal exception on a physical Samsung SM-X520, but streaming, background playback, notification and lock-screen controls, queue advance, playback speed, sleep timer, refresh and relaunch persistence still require hands-on acceptance.
+
 ## Current iOS build evidence
 
 - Xcode 26.6 built the Debug application and passed tests for an iPhone 15 simulator running iOS 26.5.

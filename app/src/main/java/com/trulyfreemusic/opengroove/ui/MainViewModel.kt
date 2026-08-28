@@ -19,6 +19,7 @@ import com.trulyfreemusic.opengroove.radio.RadioBrowserCatalog
 import com.trulyfreemusic.opengroove.radio.RadioCountry
 import com.trulyfreemusic.opengroove.radio.RadioStation
 import com.trulyfreemusic.opengroove.radio.RadioUiState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -122,6 +123,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
                 .onFailure { error ->
+                    if (error is CancellationException) return@onFailure
                     mutableSearchState.value = mutableSearchState.value.copy(
                         isLoading = false,
                         error = error.message ?: "Search failed. Check your connection.",
@@ -224,6 +226,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     error = if (shows.isEmpty()) "No podcasts found. Try another title, host, or language." else null,
                 )
             }.onFailure { error ->
+                if (error is CancellationException) return@onFailure
                 mutablePodcastState.value = mutablePodcastState.value.copy(
                     isSearching = false,
                     error = error.message ?: "Podcast search failed. Check your connection.",
@@ -291,6 +294,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     error = null,
                 )
             }.onFailure { error ->
+                if (error is CancellationException) return@onFailure
                 mutablePodcastState.value = mutablePodcastState.value.copy(
                     isLoadingFeed = false,
                     error = error.message ?: "This publisher feed could not be loaded.",
@@ -361,6 +365,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     error = if (combined.isEmpty()) "No working stations found. Try another filter." else null,
                 )
             }.onFailure { error ->
+                if (error is CancellationException) return@onFailure
                 mutableRadioState.value = mutableRadioState.value.copy(
                     isLoading = false,
                     isLoadingMore = false,

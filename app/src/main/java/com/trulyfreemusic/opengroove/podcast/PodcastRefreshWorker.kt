@@ -9,7 +9,10 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.trulyfreemusic.opengroove.library.LibraryRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
@@ -20,11 +23,22 @@ class PodcastRefreshWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val library = LibraryRepository(applicationContext)
         val catalog = PodcastFeedCatalog()
-        val shows = runCatching { library.subscribedPodcasts() }.getOrElse { return@withContext Result.retry() }
+        val shows = try {
+            library.subscribedPodcasts()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            return@withContext Result.retry()
+        }
         shows.forEach { show ->
-            runCatching {
+            currentCoroutineContext().ensureActive()
+            try {
                 val feed = catalog.load(show.feedUrl, show)
                 library.upsertPodcast(feed.show, feed.episodes, subscribed = true)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                // One unavailable publisher feed should not block the remaining subscriptions.
             }
         }
         Result.success()

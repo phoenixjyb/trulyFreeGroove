@@ -222,8 +222,21 @@ interface LibraryDao {
     @Query("UPDATE podcast_episodes SET positionMs = 0, completed = :completed WHERE episodeId = :episodeId")
     suspend fun setEpisodeCompleted(episodeId: String, completed: Boolean)
 
+    @Query("DELETE FROM podcast_episodes WHERE feedUrl = :feedUrl AND episodeId NOT IN (:retainedEpisodeIds)")
+    suspend fun deleteStalePodcastEpisodes(feedUrl: String, retainedEpisodeIds: List<String>)
+
+    @Query("SELECT feedUrl FROM podcast_shows WHERE subscribed = 0 ORDER BY lastRefreshedAt DESC LIMIT -1 OFFSET :keepCount")
+    suspend fun staleUnsubscribedPodcastFeeds(keepCount: Int): List<String>
+
+    @Query("DELETE FROM podcast_episodes WHERE feedUrl IN (:feedUrls)")
+    suspend fun deletePodcastEpisodesForFeeds(feedUrls: List<String>)
+
+    @Query("DELETE FROM podcast_shows WHERE feedUrl IN (:feedUrls) AND subscribed = 0")
+    suspend fun deleteUnsubscribedPodcastShows(feedUrls: List<String>)
+
     @Transaction
-    suspend fun replacePodcastMetadata(episodes: List<PodcastEpisodeEntity>) {
+    suspend fun replacePodcastMetadata(feedUrl: String, episodes: List<PodcastEpisodeEntity>) {
+        require(episodes.isNotEmpty()) { "A podcast metadata refresh must contain at least one episode." }
         insertPodcastEpisodes(episodes)
         episodes.forEach { episode ->
             refreshPodcastEpisode(
@@ -240,6 +253,15 @@ interface LibraryDao {
                 durationMs = episode.durationMs,
             )
         }
+        deleteStalePodcastEpisodes(feedUrl, episodes.map(PodcastEpisodeEntity::episodeId))
+    }
+
+    @Transaction
+    suspend fun pruneUnsubscribedPodcastCache(keepCount: Int) {
+        val staleFeeds = staleUnsubscribedPodcastFeeds(keepCount)
+        if (staleFeeds.isEmpty()) return
+        deletePodcastEpisodesForFeeds(staleFeeds)
+        deleteUnsubscribedPodcastShows(staleFeeds)
     }
 }
 
