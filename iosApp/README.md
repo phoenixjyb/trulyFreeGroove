@@ -18,6 +18,8 @@ open OpenGroove.xcodeproj
 
 Choose an Apple development team in Signing & Capabilities, then run on an iPhone. The Xcode build phase invokes `:shared:embedAndSignAppleFrameworkForXcode` automatically.
 
+Wikimedia Commons discovery works without a credential. Jamendo is optional; pass your own public client ID as the `JAMENDO_CLIENT_ID` Xcode build setting (for example in a private, untracked xcconfig or on the `xcodebuild` command line). Never commit it to the generated project.
+
 The Swift-only radio model and directory tests can run without Xcode:
 
 ```bash
@@ -27,4 +29,6 @@ swiftc OpenGroove/Models/RadioStation.swift OpenGroove/Services/RadioDirectory.s
 /tmp/opengroove-radio-smoke
 ```
 
-The first parity slice contains Radio Browser search, working-stream filtering, saved stations, AVPlayer/HLS playback, background audio configuration, a dedicated station player, previous/next switching, and Control Center/lock-screen commands. Music and podcast tabs are deliberately marked as the next parity slices rather than presenting incomplete playback.
+The native iOS counterpart now implements the same product use cases as Android: license-explicit Wikimedia Commons discovery, optional Jamendo discovery, five official-platform handoffs, local playlists, internet-radio discovery/saved/recent lists, publisher-feed podcasts, subscriptions and Unplayed inbox, and dedicated AVPlayer experiences for music, radio and podcasts. The shared Kotlin framework remains the fail-closed playback-policy authority.
+
+Simulator builds and unit tests do not replace acceptance on a physical iPhone. Streaming, background playback, Control Center/lock-screen commands, interruptions, timers, refresh scheduling and persistence still need to be exercised on the target phone.

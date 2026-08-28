@@ -20,13 +20,18 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.trulyfreemusic.opengroove.ios
         PRODUCT_NAME: OpenGroove
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: 0.1.0
+        MARKETING_VERSION: 0.3.0
+        JAMENDO_CLIENT_ID: ""
         FRAMEWORK_SEARCH_PATHS: "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
         OTHER_LDFLAGS: "$(inherited) -framework OpenGrooveShared"
     preBuildScripts:
       - name: Build shared Kotlin framework
         basedOnDependencyAnalysis: false
         script: |
+          if [ "${OPEN_GROOVE_SKIP_SHARED_BUILD:-0}" = "1" ]; then
+            echo "Using the existing OpenGrooveShared framework for this verification build."
+            exit 0
+          fi
           cd "$SRCROOT/.."
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
   OpenGrooveTests:
@@ -39,6 +44,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.trulyfreemusic.opengroove.ios.tests
+        GENERATE_INFOPLIST_FILE: YES
         FRAMEWORK_SEARCH_PATHS: "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
         OTHER_LDFLAGS: "$(inherited) -framework OpenGrooveShared"
 schemes:

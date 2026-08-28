@@ -22,7 +22,7 @@ This repository now contains the existing Android app, a native SwiftUI iOS coun
 - Search for podcasts through Apple's public catalog using English, mainland-Chinese, or Hong Kong storefront scopes; Apple supplies discovery metadata, not episode audio.
 - Add a publisher RSS/Atom feed directly, browse its episodes, subscribe locally, stream from publisher enclosure URLs, and resume from the saved listening position.
 - Open a dedicated podcast player, build an episode queue, jump between or remove queued episodes, choose 0.75×–2× playback speed, and set a service-owned 15–60 minute sleep timer.
-- Refresh subscribed feed metadata automatically about every 12 hours through Android WorkManager when the phone is online and its battery is not low.
+- Refresh subscribed feed metadata automatically on an inexact, system-controlled cadence: Android uses a roughly 12-hour WorkManager job, while iOS requests an opportunistic BGAppRefresh task no earlier than about 12 hours.
 - Use a searchable Unplayed inbox across subscriptions, search within a show's episodes, and mark episodes played or unplayed without downloading audio.
 
 The app intentionally has no YouTube downloader, stream extractor, hidden player, podcast downloader, or offline audio cache.
@@ -35,7 +35,7 @@ The language controls choose a discovery storefront: US for English/all, mainlan
 
 Subscribing and saving progress are local database operations. They do not download an episode. Podcast streams remain under the publisher's control and may change, require authentication, contain advertising, or become unavailable. Users should follow each publisher's terms.
 
-Automatic refresh is deliberately inexact and metadata-only. Android schedules one unique periodic job, and power-saving modes may defer it. A failed publisher feed is skipped until the next cycle so other subscriptions still refresh. No episode enclosure is opened by the background worker.
+Automatic refresh is deliberately inexact and metadata-only. Android schedules one unique periodic job; iOS asks the system for an opportunistic background-app refresh. Power-saving modes and platform scheduling may defer either path. A failed publisher feed is skipped until the next cycle so other subscriptions still refresh. No episode enclosure is opened by the background worker.
 
 ## Internet radio
 
@@ -72,7 +72,7 @@ Jamendo is optional. Without a client ID, the app still searches and streams lic
 
 ## iOS development
 
-The iOS source is under `iosApp`. Its first parity slice provides Radio Browser search and browsing, saved stations, AVPlayer/HLS playback, a dedicated player, previous/next switching, background-audio configuration, and Control Center/lock-screen commands.
+The iOS source is under `iosApp`. It mirrors the Android use cases with native SwiftUI/AVPlayer adapters: licensed Wikimedia discovery and optional Jamendo, official music-platform handoffs, local playlists, Radio Browser discovery/saved/recent lists, Apple podcast discovery plus publisher RSS/Atom feeds, subscriptions and Unplayed inbox, queue/resume/speed/sleep controls, background audio and system commands. See [docs/feature-parity.md](docs/feature-parity.md) for the separate simulator and physical-device gates.
 
 Full Xcode and XcodeGen are required to generate and build the iPhone application. See [iosApp/README.md](iosApp/README.md). The Swift source and radio core can still be type-checked and smoke-tested with Apple Command Line Tools, but that is not an iPhone build or physical-device acceptance.
 

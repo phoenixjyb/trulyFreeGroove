@@ -20,8 +20,14 @@
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>com.trulyfreemusic.opengroove.podcast-refresh</string>
+    </array>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <key>JamendoClientID</key>
+    <string>$(JAMENDO_CLIENT_ID)</string>
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoadsForMedia</key>

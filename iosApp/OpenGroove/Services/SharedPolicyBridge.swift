@@ -15,4 +15,27 @@ enum SharedPolicyBridge {
         station.isPlayable
 #endif
     }
+
+    static func allowsPodcastPlayback(_ episode: PodcastEpisode) -> Bool {
+#if canImport(OpenGrooveShared)
+        SharedPlaybackPolicy.shared.isPodcastStreamAllowed(
+            title: episode.title,
+            audioUrl: episode.audioURL.absoluteString
+        )
+#else
+        episode.isPlayable
+#endif
+    }
+
+    static func allowsMusicPlayback(_ track: MusicTrack) -> Bool {
+#if canImport(OpenGrooveShared)
+        SharedPlaybackPolicy.shared.isDirectTrackPlaybackAllowed(
+            playbackMode: track.playbackMode == .directAuthorized ? PlaybackMode.directAuthorized : PlaybackMode.externalOnly,
+            streamUrl: track.streamURL.absoluteString,
+            licenseUrl: track.licenseURL.absoluteString
+        )
+#else
+        track.isDirectPlaybackCandidate
+#endif
+    }
 }

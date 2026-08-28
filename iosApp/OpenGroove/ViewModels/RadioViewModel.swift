@@ -6,6 +6,7 @@ final class RadioViewModel: ObservableObject {
     enum ListMode: String, CaseIterable, Identifiable {
         case discover = "Discover"
         case saved = "Saved"
+        case recent = "Recent"
         var id: Self { self }
     }
 

@@ -2,7 +2,10 @@ import SwiftUI
 
 struct RadioView: View {
     @EnvironmentObject private var player: RadioPlayer
+    @EnvironmentObject private var podcastPlayer: PodcastPlayer
+    @EnvironmentObject private var musicPlayer: MusicPlayer
     @EnvironmentObject private var saved: SavedStationStore
+    @EnvironmentObject private var recent: RecentStationStore
     @StateObject private var model = RadioViewModel()
 
     let onOpenPlayer: () -> Void
@@ -11,7 +14,11 @@ struct RadioView: View {
     private let categories = ["News", "Talk", "Sports", "Culture", "Education", "Kids", "Community"]
 
     private var visibleStations: [RadioStation] {
-        model.mode == .saved ? saved.stations : model.stations
+        switch model.mode {
+        case .discover: model.stations
+        case .saved: saved.stations
+        case .recent: recent.stations
+        }
     }
 
     var body: some View {
@@ -54,7 +61,7 @@ struct RadioView: View {
                 }
             }
 
-            if model.isLoading && visibleStations.isEmpty {
+            if model.mode == .discover && model.isLoading && visibleStations.isEmpty {
                 Section {
                     HStack {
                         Spacer()
@@ -66,19 +73,22 @@ struct RadioView: View {
             } else if visibleStations.isEmpty {
                 Section {
                     ContentUnavailableView(
-                        model.mode == .saved ? "No saved stations" : "No stations found",
+                        emptyTitle,
                         systemImage: model.mode == .saved ? "heart" : "radio",
-                        description: Text(model.mode == .saved ? "Save a station to keep it here." : "Try another name, country or category.")
+                        description: Text(emptyDescription)
                     )
                 }
             } else {
-                Section(model.mode == .saved ? "Saved stations" : "Working internet streams") {
+                Section(listTitle) {
                     ForEach(visibleStations) { station in
                         StationRow(
                             station: station,
                             isSaved: saved.contains(station),
                             onPlay: {
+                                musicPlayer.deactivate()
+                                podcastPlayer.deactivateForRadio()
                                 player.play(station, queue: visibleStations)
+                                recent.record(station)
                                 model.registerClick(station)
                                 onOpenPlayer()
                             },
@@ -88,7 +98,11 @@ struct RadioView: View {
                 }
             }
 
-            if let error = model.errorMessage {
+            if model.mode == .recent && !recent.stations.isEmpty {
+                Section { Button("Clear recent stations", role: .destructive, action: recent.clear) }
+            }
+
+            if model.mode == .discover, let error = model.errorMessage {
                 Section {
                     Label(error, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.red)
@@ -104,6 +118,30 @@ struct RadioView: View {
             ToolbarItem(placement: .primaryAction) {
                 if model.isLoading { ProgressView() }
             }
+        }
+    }
+
+    private var listTitle: String {
+        switch model.mode {
+        case .discover: "Working internet streams"
+        case .saved: "Saved stations"
+        case .recent: "Recently played"
+        }
+    }
+
+    private var emptyTitle: String {
+        switch model.mode {
+        case .discover: "No stations found"
+        case .saved: "No saved stations"
+        case .recent: "No recently played stations"
+        }
+    }
+
+    private var emptyDescription: String {
+        switch model.mode {
+        case .discover: "Try another name, country or category."
+        case .saved: "Save a station to keep it here."
+        case .recent: "Stations you play will appear here."
         }
     }
 }

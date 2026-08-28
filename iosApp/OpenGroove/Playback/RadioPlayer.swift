@@ -7,16 +7,18 @@ final class RadioPlayer: ObservableObject {
     @Published private(set) var currentStation: RadioStation?
     @Published private(set) var isPlaying = false
     @Published private(set) var isBuffering = false
+    @Published private(set) var isActive = false
     @Published private(set) var errorMessage: String?
 
     private let player = AVPlayer()
     private var queue: [RadioStation] = []
     private var statusObservation: NSKeyValueObservation?
     private var itemStatusObservation: NSKeyValueObservation?
+    private var remoteTargets: [(MPRemoteCommand, Any)] = []
 
     init() {
         configureAudioSession()
-        configureRemoteCommands()
+        installRemoteCommands()
         statusObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
             Task { @MainActor in
                 self?.isPlaying = player.timeControlStatus == .playing
@@ -32,6 +34,8 @@ final class RadioPlayer: ObservableObject {
             return
         }
         self.queue = queue.filter(\.isPlayable)
+        isActive = true
+        installRemoteCommands()
         currentStation = station
         errorMessage = nil
         activateAudioSession()
@@ -58,6 +62,12 @@ final class RadioPlayer: ObservableObject {
     func retry() {
         guard let currentStation else { return }
         play(currentStation, queue: queue)
+    }
+
+    func yieldRemoteControl() {
+        player.pause()
+        isActive = false
+        removeRemoteCommands()
     }
 
     @discardableResult
@@ -93,30 +103,38 @@ final class RadioPlayer: ObservableObject {
 #endif
     }
 
-    private func configureRemoteCommands() {
+    private func installRemoteCommands() {
+        guard remoteTargets.isEmpty else { return }
         let commands = MPRemoteCommandCenter.shared()
-        commands.playCommand.addTarget { [weak self] _ in
+        remoteTargets.append((commands.playCommand, commands.playCommand.addTarget { [weak self] _ in
             Task { @MainActor in self?.player.play() }
             return .success
-        }
-        commands.pauseCommand.addTarget { [weak self] _ in
+        }))
+        remoteTargets.append((commands.pauseCommand, commands.pauseCommand.addTarget { [weak self] _ in
             Task { @MainActor in self?.player.pause() }
             return .success
-        }
-        commands.togglePlayPauseCommand.addTarget { [weak self] _ in
+        }))
+        remoteTargets.append((commands.togglePlayPauseCommand, commands.togglePlayPauseCommand.addTarget { [weak self] _ in
             Task { @MainActor in self?.togglePlayback() }
             return .success
-        }
-        commands.nextTrackCommand.addTarget { [weak self] _ in
+        }))
+        remoteTargets.append((commands.nextTrackCommand, commands.nextTrackCommand.addTarget { [weak self] _ in
             guard let self else { return .commandFailed }
             Task { @MainActor in _ = self.switchStation(offset: 1) }
             return .success
-        }
-        commands.previousTrackCommand.addTarget { [weak self] _ in
+        }))
+        remoteTargets.append((commands.previousTrackCommand, commands.previousTrackCommand.addTarget { [weak self] _ in
             guard let self else { return .commandFailed }
             Task { @MainActor in _ = self.switchStation(offset: -1) }
             return .success
+        }))
+    }
+
+    private func removeRemoteCommands() {
+        for (command, target) in remoteTargets {
+            command.removeTarget(target)
         }
+        remoteTargets.removeAll()
     }
 
     private func updateNowPlaying() {

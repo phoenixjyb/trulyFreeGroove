@@ -52,3 +52,29 @@ func brokenAndUnsupportedStationsFailClosed() throws {
 
     #expect(try RadioDirectory().decodeStations(payload).isEmpty)
 }
+
+@MainActor
+@Test
+func recentStationsPersistDeduplicateAndCapAtTwenty() throws {
+    let suiteName = "RadioDirectoryTests.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let store = RecentStationStore(defaults: defaults)
+    for index in 0..<22 { store.record(try radioTestStation(index)) }
+    store.record(try radioTestStation(10))
+
+    let restored = RecentStationStore(defaults: defaults)
+    #expect(restored.stations.count == 20)
+    #expect(restored.stations.first?.id == "station-10")
+    #expect(Set(restored.stations.map(\.id)).count == 20)
+}
+
+private func radioTestStation(_ index: Int) throws -> RadioStation {
+    RadioStation(
+        id: "station-\(index)", name: "Station \(index)",
+        streamURL: try #require(URL(string: "https://radio.example/\(index).m3u8")),
+        homepageURL: nil, faviconURL: nil, country: "", countryCode: "", language: "",
+        tags: [], codec: "AAC", bitrate: 128, votes: 0, isOnline: true,
+        lastCheckedAt: "", isHLS: true
+    )
+}
