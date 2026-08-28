@@ -5,11 +5,19 @@ Every product feature has one shared behavior contract and two platform acceptan
 | Capability | Shared contract | Android | iOS | Remaining gate |
 |---|---|---|---|---|
 | Licensed music discovery | Models and direct-playback policy | Implemented | Shell only | iOS catalog and official handoffs |
-| Internet radio discovery | Station validity and browse vocabulary | Implemented | Implemented in source | Xcode build and physical iPhone search |
-| Radio playback | Public HTTP(S) stream boundary | Media3 service | AVPlayer and system commands in source | Xcode build and physical iPhone background/HLS |
-| Saved stations | Station identity | Room | Local Codable store in source | Xcode build and cross-platform behavior review |
+| Internet radio discovery | Station validity and browse vocabulary | Implemented | Built and unit-tested on iOS Simulator | Physical iPhone search and browsing |
+| Radio playback | Public HTTP(S) stream boundary | Media3 service | AVPlayer and system commands built on iOS Simulator | Physical iPhone background, controls and HLS |
+| Saved stations | Station identity | Room | Local Codable store built on iOS Simulator | Physical persistence and cross-platform behavior review |
 | Podcasts | Models, feed identity and search matching | Implemented | Shell only | iOS feed, library and playback |
-| Theme | Product design tokens | System light/dark | System light/dark | Visual comparison |
+| Theme | Product design tokens | System light/dark | System light/dark; simulator shell visually checked | Physical light/dark comparison |
+
+## Current iOS build evidence
+
+- Xcode 26.6 built the Debug application and passed tests for an iPhone 15 simulator running iOS 26.5.
+- The Xcode build phase linked the Kotlin `OpenGrooveShared` framework, and Swift resolved the shared playback-policy API.
+- Both Swift radio-directory tests passed in the iOS Simulator test bundle.
+- The built application installed and launched in the simulator, and the initial SwiftUI shell rendered without a crash.
+- This is simulator evidence only. Signing, installation, playback, background behavior, system controls and lifecycle acceptance on the target physical iPhone 15 remain open.
 
 ## Definition of done
 

@@ -13,10 +13,10 @@ targets:
     platform: iOS
     sources:
       - path: OpenGroove
-    info:
-      path: OpenGroove/Info.plist
     settings:
       base:
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: OpenGroove/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.trulyfreemusic.opengroove.ios
         PRODUCT_NAME: OpenGroove
         CURRENT_PROJECT_VERSION: 1
@@ -39,6 +39,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.trulyfreemusic.opengroove.ios.tests
+        FRAMEWORK_SEARCH_PATHS: "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+        OTHER_LDFLAGS: "$(inherited) -framework OpenGrooveShared"
 schemes:
   OpenGroove:
     build:
