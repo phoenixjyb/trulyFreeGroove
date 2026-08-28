@@ -106,6 +106,10 @@ func officialMusicHandoffsRemainHTTPSAndEncodeSearch() throws {
     }
     let netease = try #require(OfficialMusicProvider.netease.searchURL(query: "A&B"))
     #expect(netease.absoluteString.contains("A%26B"))
+    let spotify = try #require(OfficialMusicProvider.spotify.searchURL(query: "粤语/rock?#"))
+    #expect(spotify.absoluteString.contains("%2F"))
+    #expect(spotify.absoluteString.contains("%3F"))
+    #expect(spotify.absoluteString.contains("%23"))
 }
 
 @MainActor

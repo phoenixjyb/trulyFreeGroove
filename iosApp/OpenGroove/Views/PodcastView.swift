@@ -143,6 +143,7 @@ private struct PodcastShowView: View {
     @State private var episodeQuery = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var loadGeneration = 0
 
     let onOpenPlayer: () -> Void
 
@@ -222,16 +223,22 @@ private struct PodcastShowView: View {
     }
 
     private func load() async {
+        loadGeneration += 1
+        let generation = loadGeneration
         episodes = library.cachedEpisodes(for: loadedShow.feedURL)
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+        defer {
+            if generation == loadGeneration { isLoading = false }
+        }
         do {
             let feed = try await PodcastFeedDirectory().load(feedURL: loadedShow.feedURL, fallback: loadedShow)
+            guard generation == loadGeneration, !Task.isCancelled else { return }
             loadedShow = feed.show
             library.upsert(feed)
             episodes = library.cachedEpisodes(for: feed.show.feedURL)
         } catch {
+            guard generation == loadGeneration, !Task.isCancelled else { return }
             errorMessage = error.localizedDescription
         }
     }

@@ -26,6 +26,23 @@ Every product feature has one shared behavior contract and two platform acceptan
 - Discover, official handoffs, Library/create-playlist, Podcasts and direct publisher-RSS screens were visually checked in the iPhone 15 simulator.
 - This is simulator evidence only. Signing, installation, playback, background behavior, system controls and lifecycle acceptance on the target physical iPhone 15 remain open.
 
+## Pre-device hardening evidence (2026-08-28)
+
+- The ARM64 iPhoneOS application and all 16 Swift test functions compile and link with `build-for-testing`; no simulator was used for this check.
+- Xcode static analysis passes for the generic physical-iOS target, and application validation no longer reports an incomplete iPad orientation declaration.
+- A macOS executable compiled directly from the production podcast model, parser and store sources passed duration validation, nested RSS text parsing, bounded-cache and persistence smoke checks.
+- Player end notifications are scoped to their owning `AVPlayerItem`; player switches also re-establish the correct audio-session mode and remote-command ownership.
+- These checks prove source and device-target build readiness only. Physical playback, lifecycle and operating-system integration remain open.
+
+## Next physical iPhone acceptance run
+
+1. Record the installed commit and app version, then launch in both light and dark appearance.
+2. Play music, then a podcast, then radio, and repeat in reverse; verify only the active player responds or appears in Control Center.
+3. Lock the phone and exercise play, pause, seek, next and previous where each content type supports them.
+4. Verify podcast resume, automatic queue advance, speed, sleep timer and progress after foreground/background transitions.
+5. Exercise Chinese, English and Cantonese searches, direct publisher feeds, official-platform handoffs, radio HLS, saved stations and persistence after relaunch.
+6. Capture device logs for any termination, playback failure or background-task issue before changing the source again.
+
 ## Definition of done
 
 1. Portable behavior lives in `shared/src/commonMain` and is covered in `commonTest`.

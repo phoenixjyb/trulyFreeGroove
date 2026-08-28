@@ -34,11 +34,16 @@ final class MusicPlayer: ObservableObject {
             Task { @MainActor in self?.record(time.seconds) }
         }
         endObserver = NotificationCenter.default.publisher(for: AVPlayerItem.didPlayToEndTimeNotification)
-            .sink { [weak self] _ in
+            .sink { [weak self] notification in
                 Task { @MainActor in
-                    self?.player.pause()
-                    self?.position = self?.duration ?? 0
-                    self?.updateNowPlaying()
+                    guard
+                        let self,
+                        let endedItem = notification.object as? AVPlayerItem,
+                        endedItem === self.player.currentItem
+                    else { return }
+                    self.player.pause()
+                    self.position = self.duration
+                    self.updateNowPlaying()
                 }
             }
     }
@@ -75,7 +80,7 @@ final class MusicPlayer: ObservableObject {
 
     func togglePlayback() {
         if player.timeControlStatus == .playing { player.pause() }
-        else { activateAudioSession(); player.play() }
+        else { resumePlayback() }
     }
 
     func seek(to seconds: TimeInterval) {
@@ -87,6 +92,7 @@ final class MusicPlayer: ObservableObject {
 
     func deactivate() {
         player.pause()
+        if isActive { MPNowPlayingInfoCenter.default().nowPlayingInfo = nil }
         isActive = false
         removeRemoteCommands()
     }
@@ -111,12 +117,17 @@ final class MusicPlayer: ObservableObject {
 #endif
     }
 
+    private func resumePlayback() {
+        activateAudioSession()
+        player.play()
+    }
+
     private func installRemoteCommands() {
         guard remoteTargets.isEmpty else { return }
         let commands = MPRemoteCommandCenter.shared()
         commands.changePlaybackPositionCommand.isEnabled = true
         remoteTargets.append((commands.playCommand, commands.playCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.player.play() }
+            Task { @MainActor in self?.resumePlayback() }
             return .success
         }))
         remoteTargets.append((commands.pauseCommand, commands.pauseCommand.addTarget { [weak self] _ in

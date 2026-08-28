@@ -12,6 +12,7 @@ final class MusicViewModel: ObservableObject {
     private let catalog = WikimediaMusicCatalog()
     private let jamendoCatalog: JamendoMusicCatalog?
     private var started = false
+    private var searchGeneration = 0
 
     var jamendoConfigured: Bool { jamendoCatalog != nil }
 
@@ -26,9 +27,13 @@ final class MusicViewModel: ObservableObject {
     }
 
     func search() async {
+        searchGeneration += 1
+        let generation = searchGeneration
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+        defer {
+            if generation == searchGeneration { isLoading = false }
+        }
         let querySnapshot = query
         let languageSnapshot = language
         var attempts: [MusicCatalogAttempt] = []
@@ -45,6 +50,7 @@ final class MusicViewModel: ObservableObject {
             }
             for await attempt in group { attempts.append(attempt) }
         }
+        guard generation == searchGeneration, !Task.isCancelled else { return }
         tracks = attempts.flatMap(\.tracks).reduce(into: []) { result, track in
             if !result.contains(where: { $0.providerName == track.providerName && $0.sourceURL == track.sourceURL }) {
                 result.append(track)
