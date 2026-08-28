@@ -1,5 +1,6 @@
 package com.trulyfreemusic.opengroove.data
 
+import com.trulyfreemusic.opengroove.BuildConfig
 import android.text.Html
 import com.trulyfreemusic.opengroove.model.PlaybackMode
 import com.trulyfreemusic.opengroove.model.Track
@@ -42,7 +43,10 @@ class WikimediaCatalog {
         connection.connectTimeout = 12_000
         connection.readTimeout = 20_000
         connection.setRequestProperty("Accept", "application/json")
-        connection.setRequestProperty("User-Agent", "OpenGroove/0.1 (personal Android music discovery app)")
+        connection.setRequestProperty(
+            "User-Agent",
+            "OpenGroove/${BuildConfig.VERSION_NAME} (personal Android music discovery app)",
+        )
 
         return try {
             val code = connection.responseCode

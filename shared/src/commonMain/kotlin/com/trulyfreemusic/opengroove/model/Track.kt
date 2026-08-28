@@ -1,5 +1,7 @@
 package com.trulyfreemusic.opengroove.model
 
+import com.trulyfreemusic.opengroove.SharedPlaybackPolicy
+
 enum class PlaybackMode {
     DIRECT_AUTHORIZED,
     EXTERNAL_ONLY,
@@ -19,7 +21,5 @@ data class Track(
     val playbackMode: PlaybackMode,
 ) {
     fun isDirectPlaybackAllowed(): Boolean =
-        playbackMode == PlaybackMode.DIRECT_AUTHORIZED &&
-            streamUrl.startsWith("https://") &&
-            licenseUrl.startsWith("http")
+        SharedPlaybackPolicy.isDirectTrackPlaybackAllowed(playbackMode, streamUrl, licenseUrl)
 }

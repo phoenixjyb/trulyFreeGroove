@@ -1,5 +1,6 @@
 package com.trulyfreemusic.opengroove.data
 
+import com.trulyfreemusic.opengroove.BuildConfig
 import com.trulyfreemusic.opengroove.model.PlaybackMode
 import com.trulyfreemusic.opengroove.model.Track
 import java.io.IOException
@@ -7,13 +8,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import org.json.JSONObject
-
-enum class SearchLanguage(val label: String, val jamendoCode: String?, val searchHint: String) {
-    ALL("All", null, ""),
-    ENGLISH("English", "en", "English"),
-    CHINESE("国语 / 中文", "zh", "中文"),
-    CANTONESE("粤语 / Cantonese", "zh", "粤语 Cantonese"),
-}
 
 class JamendoCatalog(private val clientId: String) {
     fun search(query: String, language: SearchLanguage): List<Track> {
@@ -49,7 +43,7 @@ class JamendoCatalog(private val clientId: String) {
         connection.connectTimeout = 12_000
         connection.readTimeout = 15_000
         connection.setRequestProperty("Accept", "application/json")
-        connection.setRequestProperty("User-Agent", "OpenGroove/0.1 Android")
+        connection.setRequestProperty("User-Agent", "OpenGroove/${BuildConfig.VERSION_NAME} Android")
 
         return try {
             val code = connection.responseCode

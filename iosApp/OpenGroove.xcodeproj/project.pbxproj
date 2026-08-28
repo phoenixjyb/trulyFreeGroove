@@ -1,0 +1,600 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		020CB9918B9CB176E0840F84 /* WikimediaMusicCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F7082386D6F20BEC3D91887 /* WikimediaMusicCatalog.swift */; };
+		06BE6C788E7A9EE78F7E45FC /* PodcastBackgroundRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3448DABF46CE091F4A9EA8D /* PodcastBackgroundRefresh.swift */; };
+		0E083FDF54E629BCC2A08D3F /* MusicDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1D04B62BE5AD78EBECF4B7 /* MusicDiscoveryView.swift */; };
+		12D80E20DB7D4ADE05D4A506 /* PodcastCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65C1448AA88C39F5B929D4C5 /* PodcastCoreTests.swift */; };
+		1F17B58B8397FABA92DC77B0 /* RadioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B3F707D755900E697A5D546 /* RadioPlayer.swift */; };
+		2811FD967378D7864D3CD510 /* PodcastPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC759C38FDE6B5DE51E8C859 /* PodcastPlayer.swift */; };
+		2DDD141B769339EDBBDAE498 /* MusicPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96BBABC6D81B4F4BBCE45792 /* MusicPlayer.swift */; };
+		3160C8D615B58A0B27314087 /* PodcastLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A19E99BE0BF73D09D47D3F /* PodcastLibraryStore.swift */; };
+		43F6737445509AEA05A85116 /* RecentStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B14FDA765A25352B96CDF8 /* RecentStationStore.swift */; };
+		4C6F8771AF8D9D39BBB43EB9 /* SavedStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08DBAD6F63C44B1E15763AC5 /* SavedStationStore.swift */; };
+		536F3975581A8B2F71F03E93 /* RadioDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015D84F2FDA584C2CC3EDE5B /* RadioDirectory.swift */; };
+		57BC7C526E9E84A351D3092B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EAD5B7BED5D682B8A907B /* ContentView.swift */; };
+		5876961D4B8929F119FCAC39 /* MusicModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B23619AFD7797FB7C9B9A1E /* MusicModels.swift */; };
+		69B4EEAA1C0AAC986E3CB718 /* RadioStation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9ECA453F4EEB0D4E677ABC5 /* RadioStation.swift */; };
+		6B39D270C0B5C6E79DA05CB0 /* MusicPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B13B44318769AD487F466B5 /* MusicPlayerView.swift */; };
+		6F492B5A6F7D4379A6C272F4 /* MusicLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B65C88A3C5FCFE86350CB2D /* MusicLibraryView.swift */; };
+		77D24C4B4162D53B9584E3F0 /* MusicCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F804CEE1F5A2A658243D62E /* MusicCoreTests.swift */; };
+		80BD3762305FCC5657EAC578 /* OpenGrooveApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F0FD4B715CB22163EF7EDA0 /* OpenGrooveApp.swift */; };
+		82FE20A5B61105A7B5175BDD /* RadioPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DB17890B5431EAC3F1FB1BF /* RadioPlayerView.swift */; };
+		908629FDC0E6C89D9C9154B5 /* RadioDirectoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C9DFA475965295CC000C41 /* RadioDirectoryTests.swift */; };
+		91F7C059ACA2F778912ABA82 /* MusicViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE887B0C75D7459CAEEA7BF1 /* MusicViewModel.swift */; };
+		949078AE01F9A00BA3CA64BC /* MusicLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C73EEC44A892210D508AA02 /* MusicLibraryStore.swift */; };
+		A18B31B1A9B47988492FF031 /* JamendoMusicCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD298289D9EC730EB89A42E4 /* JamendoMusicCatalog.swift */; };
+		B687824D2CED4048CCA4B7ED /* PodcastFeedDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0AE66C04B3643D8FF79DCA /* PodcastFeedDirectory.swift */; };
+		C0E8CB9B14A1E6E36B5B3A5F /* PodcastModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E744F152C42B5582CD8E38 /* PodcastModels.swift */; };
+		C6883FD1C50EF2B0DE9475F0 /* RadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223D2B5D1B5F659462831E92 /* RadioView.swift */; };
+		CDFA179F1E5280B3B570132F /* SharedPolicyBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A5EF63262D354DB2E6ECA11 /* SharedPolicyBridge.swift */; };
+		D8FE70A8A7B9E142D353EAB7 /* PodcastPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE42256F8D2F7FD633F372EF /* PodcastPlayerView.swift */; };
+		D9B6D67EDA67879A36417CA7 /* PodcastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C4BD16B6B5C2E2ED312BDEC /* PodcastViewModel.swift */; };
+		EADC40D892049A2A96742550 /* PodcastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11509DD4729DDB00244E215F /* PodcastView.swift */; };
+		EE87B916B39542D2434AFE3B /* PodcastCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA7B2D2DE1DEB6A2C65582A /* PodcastCatalog.swift */; };
+		F6253FA25EAE35DA6CA3021B /* RadioViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87462B98A7214B4786078264 /* RadioViewModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B4DF576AF7E9768831B2E945 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E7F80216028C88FC6451F845 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D777603CB18E80F17E971BD1;
+			remoteInfo = OpenGroove;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		015D84F2FDA584C2CC3EDE5B /* RadioDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioDirectory.swift; sourceTree = "<group>"; };
+		04C9DFA475965295CC000C41 /* RadioDirectoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioDirectoryTests.swift; sourceTree = "<group>"; };
+		08DBAD6F63C44B1E15763AC5 /* SavedStationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedStationStore.swift; sourceTree = "<group>"; };
+		11509DD4729DDB00244E215F /* PodcastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastView.swift; sourceTree = "<group>"; };
+		1B3F707D755900E697A5D546 /* RadioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioPlayer.swift; sourceTree = "<group>"; };
+		1F0FD4B715CB22163EF7EDA0 /* OpenGrooveApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenGrooveApp.swift; sourceTree = "<group>"; };
+		1F7082386D6F20BEC3D91887 /* WikimediaMusicCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikimediaMusicCatalog.swift; sourceTree = "<group>"; };
+		223D2B5D1B5F659462831E92 /* RadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioView.swift; sourceTree = "<group>"; };
+		2DB17890B5431EAC3F1FB1BF /* RadioPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioPlayerView.swift; sourceTree = "<group>"; };
+		3CA7B2D2DE1DEB6A2C65582A /* PodcastCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastCatalog.swift; sourceTree = "<group>"; };
+		3D18BEDD734033487F05229E /* OpenGroove.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenGroove.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		454EAD5B7BED5D682B8A907B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		4A5EF63262D354DB2E6ECA11 /* SharedPolicyBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedPolicyBridge.swift; sourceTree = "<group>"; };
+		61696B82A16C571AF7ACD4A7 /* OpenGrooveTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OpenGrooveTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		65C1448AA88C39F5B929D4C5 /* PodcastCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastCoreTests.swift; sourceTree = "<group>"; };
+		6B23619AFD7797FB7C9B9A1E /* MusicModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicModels.swift; sourceTree = "<group>"; };
+		6C4BD16B6B5C2E2ED312BDEC /* PodcastViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastViewModel.swift; sourceTree = "<group>"; };
+		6E1D04B62BE5AD78EBECF4B7 /* MusicDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicDiscoveryView.swift; sourceTree = "<group>"; };
+		7F804CEE1F5A2A658243D62E /* MusicCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicCoreTests.swift; sourceTree = "<group>"; };
+		80E744F152C42B5582CD8E38 /* PodcastModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastModels.swift; sourceTree = "<group>"; };
+		87462B98A7214B4786078264 /* RadioViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioViewModel.swift; sourceTree = "<group>"; };
+		87B14FDA765A25352B96CDF8 /* RecentStationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentStationStore.swift; sourceTree = "<group>"; };
+		8B13B44318769AD487F466B5 /* MusicPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayerView.swift; sourceTree = "<group>"; };
+		8E0AE66C04B3643D8FF79DCA /* PodcastFeedDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastFeedDirectory.swift; sourceTree = "<group>"; };
+		94A19E99BE0BF73D09D47D3F /* PodcastLibraryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastLibraryStore.swift; sourceTree = "<group>"; };
+		96BBABC6D81B4F4BBCE45792 /* MusicPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayer.swift; sourceTree = "<group>"; };
+		9B65C88A3C5FCFE86350CB2D /* MusicLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicLibraryView.swift; sourceTree = "<group>"; };
+		9C73EEC44A892210D508AA02 /* MusicLibraryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicLibraryStore.swift; sourceTree = "<group>"; };
+		A9ECA453F4EEB0D4E677ABC5 /* RadioStation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioStation.swift; sourceTree = "<group>"; };
+		AE42256F8D2F7FD633F372EF /* PodcastPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastPlayerView.swift; sourceTree = "<group>"; };
+		BE887B0C75D7459CAEEA7BF1 /* MusicViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicViewModel.swift; sourceTree = "<group>"; };
+		CCACF86A14523A8D3480AD9B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DD298289D9EC730EB89A42E4 /* JamendoMusicCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JamendoMusicCatalog.swift; sourceTree = "<group>"; };
+		F3448DABF46CE091F4A9EA8D /* PodcastBackgroundRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastBackgroundRefresh.swift; sourceTree = "<group>"; };
+		FC759C38FDE6B5DE51E8C859 /* PodcastPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastPlayer.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		01100745F3EA393AEBD318E2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3D18BEDD734033487F05229E /* OpenGroove.app */,
+				61696B82A16C571AF7ACD4A7 /* OpenGrooveTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		29C609F82D6309879DE2FA57 /* SwiftTests */ = {
+			isa = PBXGroup;
+			children = (
+				7F804CEE1F5A2A658243D62E /* MusicCoreTests.swift */,
+				65C1448AA88C39F5B929D4C5 /* PodcastCoreTests.swift */,
+				04C9DFA475965295CC000C41 /* RadioDirectoryTests.swift */,
+			);
+			path = SwiftTests;
+			sourceTree = "<group>";
+		};
+		5D6FCE9CC03BE0C231125EF7 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				DD298289D9EC730EB89A42E4 /* JamendoMusicCatalog.swift */,
+				F3448DABF46CE091F4A9EA8D /* PodcastBackgroundRefresh.swift */,
+				3CA7B2D2DE1DEB6A2C65582A /* PodcastCatalog.swift */,
+				8E0AE66C04B3643D8FF79DCA /* PodcastFeedDirectory.swift */,
+				015D84F2FDA584C2CC3EDE5B /* RadioDirectory.swift */,
+				4A5EF63262D354DB2E6ECA11 /* SharedPolicyBridge.swift */,
+				1F7082386D6F20BEC3D91887 /* WikimediaMusicCatalog.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		622772714F586A1CBD3AFD94 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6B23619AFD7797FB7C9B9A1E /* MusicModels.swift */,
+				80E744F152C42B5582CD8E38 /* PodcastModels.swift */,
+				A9ECA453F4EEB0D4E677ABC5 /* RadioStation.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		64626D8859FA16BE21AAD6A9 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				BE887B0C75D7459CAEEA7BF1 /* MusicViewModel.swift */,
+				6C4BD16B6B5C2E2ED312BDEC /* PodcastViewModel.swift */,
+				87462B98A7214B4786078264 /* RadioViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		724F1D073F5DD5E9CD1567AA /* Playback */ = {
+			isa = PBXGroup;
+			children = (
+				96BBABC6D81B4F4BBCE45792 /* MusicPlayer.swift */,
+				FC759C38FDE6B5DE51E8C859 /* PodcastPlayer.swift */,
+				1B3F707D755900E697A5D546 /* RadioPlayer.swift */,
+			);
+			path = Playback;
+			sourceTree = "<group>";
+		};
+		74C6A6FC40CF96BA87787D3F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				454EAD5B7BED5D682B8A907B /* ContentView.swift */,
+				6E1D04B62BE5AD78EBECF4B7 /* MusicDiscoveryView.swift */,
+				9B65C88A3C5FCFE86350CB2D /* MusicLibraryView.swift */,
+				8B13B44318769AD487F466B5 /* MusicPlayerView.swift */,
+				AE42256F8D2F7FD633F372EF /* PodcastPlayerView.swift */,
+				11509DD4729DDB00244E215F /* PodcastView.swift */,
+				2DB17890B5431EAC3F1FB1BF /* RadioPlayerView.swift */,
+				223D2B5D1B5F659462831E92 /* RadioView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C749FCA951842C7671DCF71A /* Stores */ = {
+			isa = PBXGroup;
+			children = (
+				9C73EEC44A892210D508AA02 /* MusicLibraryStore.swift */,
+				94A19E99BE0BF73D09D47D3F /* PodcastLibraryStore.swift */,
+				87B14FDA765A25352B96CDF8 /* RecentStationStore.swift */,
+				08DBAD6F63C44B1E15763AC5 /* SavedStationStore.swift */,
+			);
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		CA60901F8067DA009D677E9B /* OpenGroove */ = {
+			isa = PBXGroup;
+			children = (
+				CCACF86A14523A8D3480AD9B /* Info.plist */,
+				1F0FD4B715CB22163EF7EDA0 /* OpenGrooveApp.swift */,
+				622772714F586A1CBD3AFD94 /* Models */,
+				724F1D073F5DD5E9CD1567AA /* Playback */,
+				5D6FCE9CC03BE0C231125EF7 /* Services */,
+				C749FCA951842C7671DCF71A /* Stores */,
+				64626D8859FA16BE21AAD6A9 /* ViewModels */,
+				74C6A6FC40CF96BA87787D3F /* Views */,
+			);
+			path = OpenGroove;
+			sourceTree = "<group>";
+		};
+		FA364EACCAC7A36DF91D48F1 = {
+			isa = PBXGroup;
+			children = (
+				CA60901F8067DA009D677E9B /* OpenGroove */,
+				29C609F82D6309879DE2FA57 /* SwiftTests */,
+				01100745F3EA393AEBD318E2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8DEB41E7DEE668D3BF311142 /* OpenGrooveTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 377E3BC227D2D6C74AA2155F /* Build configuration list for PBXNativeTarget "OpenGrooveTests" */;
+			buildPhases = (
+				CDCD6B110B525BCAC9676529 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B3CE633B0611EE05C371610E /* PBXTargetDependency */,
+			);
+			name = OpenGrooveTests;
+			packageProductDependencies = (
+			);
+			productName = OpenGrooveTests;
+			productReference = 61696B82A16C571AF7ACD4A7 /* OpenGrooveTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D777603CB18E80F17E971BD1 /* OpenGroove */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 75705046C8E4C68C71F41FCE /* Build configuration list for PBXNativeTarget "OpenGroove" */;
+			buildPhases = (
+				0323122E836325DBDC26804E /* Build shared Kotlin framework */,
+				8A22D83F87EC5A9A5887502C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OpenGroove;
+			packageProductDependencies = (
+			);
+			productName = OpenGroove;
+			productReference = 3D18BEDD734033487F05229E /* OpenGroove.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E7F80216028C88FC6451F845 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					8DEB41E7DEE668D3BF311142 = {
+						DevelopmentTeam = "";
+					};
+					D777603CB18E80F17E971BD1 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 58C2201079172E35ABC48522 /* Build configuration list for PBXProject "OpenGroove" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = FA364EACCAC7A36DF91D48F1;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 01100745F3EA393AEBD318E2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D777603CB18E80F17E971BD1 /* OpenGroove */,
+				8DEB41E7DEE668D3BF311142 /* OpenGrooveTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		0323122E836325DBDC26804E /* Build shared Kotlin framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build shared Kotlin framework";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${OPEN_GROOVE_SKIP_SHARED_BUILD:-0}\" = \"1\" ]; then\n  echo \"Using the existing OpenGrooveShared framework for this verification build.\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :shared:embedAndSignAppleFrameworkForXcode\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8A22D83F87EC5A9A5887502C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				57BC7C526E9E84A351D3092B /* ContentView.swift in Sources */,
+				A18B31B1A9B47988492FF031 /* JamendoMusicCatalog.swift in Sources */,
+				0E083FDF54E629BCC2A08D3F /* MusicDiscoveryView.swift in Sources */,
+				949078AE01F9A00BA3CA64BC /* MusicLibraryStore.swift in Sources */,
+				6F492B5A6F7D4379A6C272F4 /* MusicLibraryView.swift in Sources */,
+				5876961D4B8929F119FCAC39 /* MusicModels.swift in Sources */,
+				2DDD141B769339EDBBDAE498 /* MusicPlayer.swift in Sources */,
+				6B39D270C0B5C6E79DA05CB0 /* MusicPlayerView.swift in Sources */,
+				91F7C059ACA2F778912ABA82 /* MusicViewModel.swift in Sources */,
+				80BD3762305FCC5657EAC578 /* OpenGrooveApp.swift in Sources */,
+				06BE6C788E7A9EE78F7E45FC /* PodcastBackgroundRefresh.swift in Sources */,
+				EE87B916B39542D2434AFE3B /* PodcastCatalog.swift in Sources */,
+				B687824D2CED4048CCA4B7ED /* PodcastFeedDirectory.swift in Sources */,
+				3160C8D615B58A0B27314087 /* PodcastLibraryStore.swift in Sources */,
+				C0E8CB9B14A1E6E36B5B3A5F /* PodcastModels.swift in Sources */,
+				2811FD967378D7864D3CD510 /* PodcastPlayer.swift in Sources */,
+				D8FE70A8A7B9E142D353EAB7 /* PodcastPlayerView.swift in Sources */,
+				EADC40D892049A2A96742550 /* PodcastView.swift in Sources */,
+				D9B6D67EDA67879A36417CA7 /* PodcastViewModel.swift in Sources */,
+				536F3975581A8B2F71F03E93 /* RadioDirectory.swift in Sources */,
+				1F17B58B8397FABA92DC77B0 /* RadioPlayer.swift in Sources */,
+				82FE20A5B61105A7B5175BDD /* RadioPlayerView.swift in Sources */,
+				69B4EEAA1C0AAC986E3CB718 /* RadioStation.swift in Sources */,
+				C6883FD1C50EF2B0DE9475F0 /* RadioView.swift in Sources */,
+				F6253FA25EAE35DA6CA3021B /* RadioViewModel.swift in Sources */,
+				43F6737445509AEA05A85116 /* RecentStationStore.swift in Sources */,
+				4C6F8771AF8D9D39BBB43EB9 /* SavedStationStore.swift in Sources */,
+				CDFA179F1E5280B3B570132F /* SharedPolicyBridge.swift in Sources */,
+				020CB9918B9CB176E0840F84 /* WikimediaMusicCatalog.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CDCD6B110B525BCAC9676529 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				77D24C4B4162D53B9584E3F0 /* MusicCoreTests.swift in Sources */,
+				12D80E20DB7D4ADE05D4A506 /* PodcastCoreTests.swift in Sources */,
+				908629FDC0E6C89D9C9154B5 /* RadioDirectoryTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B3CE633B0611EE05C371610E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D777603CB18E80F17E971BD1 /* OpenGroove */;
+			targetProxy = B4DF576AF7E9768831B2E945 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		061428CA5C82A52BDB5FC59A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = "$(inherited) -framework OpenGrooveShared";
+				PRODUCT_BUNDLE_IDENTIFIER = com.trulyfreemusic.opengroove.ios.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenGroove.app/OpenGroove";
+			};
+			name = Debug;
+		};
+		32D526F7DCEA48EAE8777C93 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		35C55BDA65EBF41F0C885632 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OpenGroove/Info.plist;
+				JAMENDO_CLIENT_ID = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.3.0;
+				OTHER_LDFLAGS = "$(inherited) -framework OpenGrooveShared";
+				PRODUCT_BUNDLE_IDENTIFIER = com.trulyfreemusic.opengroove.ios;
+				PRODUCT_NAME = OpenGroove;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		6039EFD4449DD04E193F57B5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				OTHER_LDFLAGS = "$(inherited) -framework OpenGrooveShared";
+				PRODUCT_BUNDLE_IDENTIFIER = com.trulyfreemusic.opengroove.ios.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenGroove.app/OpenGroove";
+			};
+			name = Release;
+		};
+		B38166FAA670ED9515AA3B20 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited) $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OpenGroove/Info.plist;
+				JAMENDO_CLIENT_ID = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.3.0;
+				OTHER_LDFLAGS = "$(inherited) -framework OpenGrooveShared";
+				PRODUCT_BUNDLE_IDENTIFIER = com.trulyfreemusic.opengroove.ios;
+				PRODUCT_NAME = OpenGroove;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E262280A32D1043561864FB5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		377E3BC227D2D6C74AA2155F /* Build configuration list for PBXNativeTarget "OpenGrooveTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				061428CA5C82A52BDB5FC59A /* Debug */,
+				6039EFD4449DD04E193F57B5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		58C2201079172E35ABC48522 /* Build configuration list for PBXProject "OpenGroove" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E262280A32D1043561864FB5 /* Debug */,
+				32D526F7DCEA48EAE8777C93 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		75705046C8E4C68C71F41FCE /* Build configuration list for PBXNativeTarget "OpenGroove" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B38166FAA670ED9515AA3B20 /* Debug */,
+				35C55BDA65EBF41F0C885632 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E7F80216028C88FC6451F845 /* Project object */;
+}

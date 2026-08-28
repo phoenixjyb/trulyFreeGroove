@@ -5,21 +5,27 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.trulyfreemusic.opengroove.BuildConfig
 import com.trulyfreemusic.opengroove.data.JamendoCatalog
-import com.trulyfreemusic.opengroove.data.PlaylistStore
 import com.trulyfreemusic.opengroove.data.SearchLanguage
 import com.trulyfreemusic.opengroove.data.WikimediaCatalog
+import com.trulyfreemusic.opengroove.library.LibraryRepository
 import com.trulyfreemusic.opengroove.model.Track
+import com.trulyfreemusic.opengroove.podcast.ApplePodcastCatalog
+import com.trulyfreemusic.opengroove.podcast.PodcastEpisode
+import com.trulyfreemusic.opengroove.podcast.PodcastFeedCatalog
+import com.trulyfreemusic.opengroove.podcast.PodcastShow
+import com.trulyfreemusic.opengroove.podcast.PodcastUiState
 import com.trulyfreemusic.opengroove.radio.RadioBrowseMode
 import com.trulyfreemusic.opengroove.radio.RadioBrowserCatalog
 import com.trulyfreemusic.opengroove.radio.RadioCountry
 import com.trulyfreemusic.opengroove.radio.RadioStation
 import com.trulyfreemusic.opengroove.radio.RadioUiState
-import com.trulyfreemusic.opengroove.radio.SavedStationStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -34,21 +40,41 @@ data class SearchUiState(
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val jamendoCatalog = BuildConfig.JAMENDO_CLIENT_ID.takeIf(String::isNotBlank)?.let(::JamendoCatalog)
     private val wikimediaCatalog = WikimediaCatalog()
-    private val playlistStore = PlaylistStore(application)
+    private val library = LibraryRepository(application)
     private val radioCatalog = RadioBrowserCatalog()
-    private val savedStationStore = SavedStationStore(application)
+    private val applePodcastCatalog = ApplePodcastCatalog()
+    private val podcastFeedCatalog = PodcastFeedCatalog()
     private val mutableSearchState = MutableStateFlow(SearchUiState())
     private val mutableRadioState = MutableStateFlow(RadioUiState())
+    private val mutablePodcastState = MutableStateFlow(PodcastUiState())
     private var searchJob: Job? = null
     private var radioJob: Job? = null
+    private var podcastSearchJob: Job? = null
+    private var podcastFeedJob: Job? = null
+    private var podcastEpisodesJob: Job? = null
 
     val searchState: StateFlow<SearchUiState> = mutableSearchState.asStateFlow()
-    val playlists: StateFlow<Map<String, List<Track>>> = playlistStore.playlists
+    val playlists: StateFlow<Map<String, List<Track>>> = library.playlists.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap(),
+    )
     val radioState: StateFlow<RadioUiState> = mutableRadioState.asStateFlow()
-    val savedStations: StateFlow<List<RadioStation>> = savedStationStore.stations
+    val savedStations: StateFlow<List<RadioStation>> = library.savedStations.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList(),
+    )
+    val recentStations: StateFlow<List<RadioStation>> = library.recentStations.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList(),
+    )
+    val podcastState: StateFlow<PodcastUiState> = mutablePodcastState.asStateFlow()
+    val podcastSubscriptions: StateFlow<List<PodcastShow>> = library.subscriptions.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList(),
+    )
+    val unplayedPodcastEpisodes: StateFlow<List<PodcastEpisode>> = library.unplayedPodcastEpisodes.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList(),
+    )
     val jamendoConfigured: Boolean = BuildConfig.JAMENDO_CONFIGURED
 
     init {
+        viewModelScope.launch(Dispatchers.IO) { runCatching { library.migrateLegacyData() } }
         search("")
         loadRadio()
     }
@@ -77,8 +103,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val jamendoResult = jamendoCatalog?.let { catalog ->
                         runCatching { catalog.search(query, language) }
                     }
-                    val tracks = commonsResult.getOrDefault(emptyList()) +
-                        jamendoResult?.getOrDefault(emptyList()).orEmpty()
+                    val tracks = (
+                        commonsResult.getOrDefault(emptyList()) +
+                            jamendoResult?.getOrDefault(emptyList()).orEmpty()
+                        ).distinctBy { "${it.providerName.lowercase()}:${it.sourceUrl}" }
                     if (tracks.isEmpty()) {
                         commonsResult.exceptionOrNull()?.let { throw it }
                         jamendoResult?.exceptionOrNull()?.let { throw it }
@@ -102,15 +130,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun createPlaylist(name: String): Boolean = playlistStore.create(name)
-    fun addToPlaylist(playlistName: String, track: Track) = playlistStore.add(playlistName, track)
-    fun removeFromPlaylist(playlistName: String, trackId: String) = playlistStore.remove(playlistName, trackId)
+    fun createPlaylist(name: String): Boolean {
+        val cleanName = name.trim()
+        if (cleanName.isBlank() || cleanName.length > 50 || playlists.value.containsKey(cleanName)) return false
+        viewModelScope.launch(Dispatchers.IO) { library.createPlaylist(cleanName) }
+        return true
+    }
+
+    fun addToPlaylist(playlistName: String, track: Track) {
+        viewModelScope.launch(Dispatchers.IO) { library.addToPlaylist(playlistName, track) }
+    }
+
+    fun removeFromPlaylist(playlistName: String, trackId: String) {
+        viewModelScope.launch(Dispatchers.IO) { library.removeFromPlaylist(playlistName, trackId) }
+    }
 
     fun setRadioQuery(query: String) {
         mutableRadioState.value = mutableRadioState.value.copy(query = query)
     }
 
     fun searchRadio() = loadRadio()
+
+    fun loadMoreRadio() {
+        val state = mutableRadioState.value
+        if (!state.isLoading && !state.isLoadingMore && state.hasMore) loadRadio(append = true)
+    }
 
     fun selectRadioCountry(country: RadioCountry?) {
         mutableRadioState.value = mutableRadioState.value.copy(
@@ -140,7 +184,137 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadRadio()
     }
 
-    fun toggleSavedStation(station: RadioStation) = savedStationStore.toggle(station)
+    fun toggleSavedStation(station: RadioStation) {
+        viewModelScope.launch(Dispatchers.IO) { library.toggleSavedStation(station) }
+    }
+
+    fun recordRecentStation(station: RadioStation) {
+        viewModelScope.launch(Dispatchers.IO) { library.recordRecentStation(station) }
+    }
+
+    fun clearRecentStations() {
+        viewModelScope.launch(Dispatchers.IO) { library.clearRecentStations() }
+    }
+
+    fun setPodcastQuery(query: String) {
+        mutablePodcastState.value = mutablePodcastState.value.copy(query = query)
+    }
+
+    fun setPodcastLibraryQuery(query: String) {
+        mutablePodcastState.value = mutablePodcastState.value.copy(libraryQuery = query)
+    }
+
+    fun setPodcastLanguage(language: SearchLanguage) {
+        mutablePodcastState.value = mutablePodcastState.value.copy(language = language)
+    }
+
+    fun searchPodcasts() {
+        val snapshot = mutablePodcastState.value
+        podcastSearchJob?.cancel()
+        podcastSearchJob = viewModelScope.launch {
+            mutablePodcastState.value = snapshot.copy(isSearching = true, error = null)
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    applePodcastCatalog.search(snapshot.query, snapshot.language)
+                }
+            }.onSuccess { shows ->
+                mutablePodcastState.value = mutablePodcastState.value.copy(
+                    results = shows,
+                    isSearching = false,
+                    error = if (shows.isEmpty()) "No podcasts found. Try another title, host, or language." else null,
+                )
+            }.onFailure { error ->
+                mutablePodcastState.value = mutablePodcastState.value.copy(
+                    isSearching = false,
+                    error = error.message ?: "Podcast search failed. Check your connection.",
+                )
+            }
+        }
+    }
+
+    fun addPodcastFeed(feedUrl: String) {
+        selectPodcast(
+            PodcastShow(
+                catalogId = "",
+                title = "Podcast",
+                author = "",
+                description = "",
+                feedUrl = feedUrl,
+                artworkUrl = "",
+                websiteUrl = "",
+                genre = "",
+                country = "",
+            ),
+        )
+    }
+
+    fun selectPodcast(show: PodcastShow) {
+        podcastEpisodesJob?.cancel()
+        podcastEpisodesJob = viewModelScope.launch {
+            library.episodes(show.feedUrl).collect { episodes ->
+                if (mutablePodcastState.value.selectedShow?.feedUrl == show.feedUrl) {
+                    mutablePodcastState.value = mutablePodcastState.value.copy(episodes = episodes)
+                }
+            }
+        }
+        mutablePodcastState.value = mutablePodcastState.value.copy(
+            selectedShow = show,
+            episodes = emptyList(),
+            error = null,
+        )
+        refreshSelectedPodcast()
+    }
+
+    fun closePodcast() {
+        podcastFeedJob?.cancel()
+        podcastEpisodesJob?.cancel()
+        mutablePodcastState.value = mutablePodcastState.value.copy(
+            selectedShow = null,
+            episodes = emptyList(),
+            isLoadingFeed = false,
+            error = null,
+        )
+    }
+
+    fun refreshSelectedPodcast() {
+        val show = mutablePodcastState.value.selectedShow ?: return
+        podcastFeedJob?.cancel()
+        podcastFeedJob = viewModelScope.launch {
+            mutablePodcastState.value = mutablePodcastState.value.copy(isLoadingFeed = true, error = null)
+            runCatching {
+                withContext(Dispatchers.IO) { podcastFeedCatalog.load(show.feedUrl, show) }
+            }.onSuccess { feed ->
+                withContext(Dispatchers.IO) { library.upsertPodcast(feed.show, feed.episodes) }
+                mutablePodcastState.value = mutablePodcastState.value.copy(
+                    selectedShow = feed.show,
+                    isLoadingFeed = false,
+                    error = null,
+                )
+            }.onFailure { error ->
+                mutablePodcastState.value = mutablePodcastState.value.copy(
+                    isLoadingFeed = false,
+                    error = error.message ?: "This publisher feed could not be loaded.",
+                )
+            }
+        }
+    }
+
+    fun togglePodcastSubscription(show: PodcastShow) {
+        val subscribed = podcastSubscriptions.value.any { it.feedUrl == show.feedUrl }
+        viewModelScope.launch(Dispatchers.IO) { library.setPodcastSubscribed(show, !subscribed) }
+    }
+
+    fun updatePodcastProgress(episodeId: String, positionMs: Long, durationMs: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            library.updateEpisodeProgress(episodeId, positionMs, durationMs)
+        }
+    }
+
+    fun togglePodcastPlayed(episode: PodcastEpisode) {
+        viewModelScope.launch(Dispatchers.IO) {
+            library.setEpisodeCompleted(episode.episodeId, !episode.completed)
+        }
+    }
 
     fun registerStationClick(stationId: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -148,11 +322,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun loadRadio() {
+    private fun loadRadio(append: Boolean = false) {
         radioJob?.cancel()
         radioJob = viewModelScope.launch {
             val snapshot = mutableRadioState.value
-            mutableRadioState.value = snapshot.copy(isLoading = true, error = null)
+            val offset = if (append) snapshot.nextOffset else 0
+            mutableRadioState.value = snapshot.copy(
+                isLoading = !append,
+                isLoadingMore = append,
+                error = null,
+            )
             runCatching {
                 withContext(Dispatchers.IO) {
                     val countries = if (snapshot.countries.isEmpty()) {
@@ -162,20 +341,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         name = snapshot.query,
                         countryCode = snapshot.selectedCountry?.code,
                         tag = snapshot.selectedTag,
+                        offset = offset,
                     )
                     countries to stations
                 }
             }.onSuccess { (countries, stations) ->
+                val combined = if (append) {
+                    (mutableRadioState.value.stations + stations).distinctBy(RadioStation::id)
+                } else {
+                    stations
+                }
                 mutableRadioState.value = mutableRadioState.value.copy(
                     countries = countries,
-                    stations = stations,
+                    stations = combined,
                     isLoading = false,
-                    error = if (stations.isEmpty()) "No working stations found. Try another filter." else null,
+                    isLoadingMore = false,
+                    nextOffset = offset + stations.size,
+                    hasMore = stations.size == RadioBrowserCatalog.PAGE_SIZE,
+                    error = if (combined.isEmpty()) "No working stations found. Try another filter." else null,
                 )
             }.onFailure { error ->
                 mutableRadioState.value = mutableRadioState.value.copy(
                     isLoading = false,
-                    error = error.message ?: "Radio search failed. Check your connection.",
+                    isLoadingMore = false,
+                    error = error.message ?: if (append) {
+                        "Could not load more stations. Try again."
+                    } else {
+                        "Radio search failed. Check your connection."
+                    },
                 )
             }
         }

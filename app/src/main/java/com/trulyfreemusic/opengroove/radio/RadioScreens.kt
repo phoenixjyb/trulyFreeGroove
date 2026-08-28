@@ -73,23 +73,34 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import java.time.Duration
+import java.time.Instant
+
+private enum class StationListMode { DISCOVER, SAVED, RECENT }
 
 @Composable
 fun RadioBrowseScreen(
     state: RadioUiState,
     savedStations: List<RadioStation>,
+    recentStations: List<RadioStation>,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
     onCountry: (RadioCountry?) -> Unit,
     onTag: (String, RadioBrowseMode) -> Unit,
     onClearFilters: () -> Unit,
     onToggleSaved: (RadioStation) -> Unit,
+    onClearRecent: () -> Unit,
+    onLoadMore: () -> Unit,
     onPlay: (RadioStation) -> Unit,
 ) {
     var browsePanel by remember { mutableStateOf(RadioBrowseMode.COUNTRY) }
-    var savedOnly by remember { mutableStateOf(false) }
+    var listMode by remember { mutableStateOf(StationListMode.DISCOVER) }
     var showCountryDialog by remember { mutableStateOf(false) }
-    val visibleStations = if (savedOnly) savedStations else state.stations
+    val visibleStations = when (listMode) {
+        StationListMode.DISCOVER -> state.stations
+        StationListMode.SAVED -> savedStations
+        StationListMode.RECENT -> recentStations
+    }
     val savedIds = savedStations.mapTo(mutableSetOf(), RadioStation::id)
 
     LazyColumn(
@@ -115,23 +126,32 @@ fun RadioBrowseScreen(
         }
 
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 FilterChip(
-                    selected = !savedOnly,
-                    onClick = { savedOnly = false },
+                    selected = listMode == StationListMode.DISCOVER,
+                    onClick = { listMode = StationListMode.DISCOVER },
                     label = { Text("Discover") },
                     leadingIcon = { Icon(Icons.Rounded.Public, contentDescription = null, Modifier.size(17.dp)) },
                 )
                 FilterChip(
-                    selected = savedOnly,
-                    onClick = { savedOnly = true },
+                    selected = listMode == StationListMode.SAVED,
+                    onClick = { listMode = StationListMode.SAVED },
                     label = { Text("Saved ${savedStations.size}") },
                     leadingIcon = { Icon(Icons.Rounded.Favorite, contentDescription = null, Modifier.size(17.dp)) },
+                )
+                FilterChip(
+                    selected = listMode == StationListMode.RECENT,
+                    onClick = { listMode = StationListMode.RECENT },
+                    label = { Text("Recent ${recentStations.size}") },
+                    leadingIcon = { Icon(Icons.Rounded.Radio, contentDescription = null, Modifier.size(17.dp)) },
                 )
             }
         }
 
-        if (!savedOnly) {
+        if (listMode == StationListMode.DISCOVER) {
             item {
                 Text("Browse", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Row(
@@ -184,21 +204,31 @@ fun RadioBrowseScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        if (savedOnly) "Saved stations" else radioResultTitle(state),
+                        when (listMode) {
+                            StationListMode.DISCOVER -> radioResultTitle(state)
+                            StationListMode.SAVED -> "Saved stations"
+                            StationListMode.RECENT -> "Recently played"
+                        },
                         fontSize = 21.sp,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        if (savedOnly) "Saved list works without lookup • streams need internet" else "Internet streams • availability can change",
+                        if (listMode == StationListMode.DISCOVER) {
+                            "Internet streams • availability can change"
+                        } else {
+                            "Saved locally • playback still needs internet"
+                        },
                         color = MaterialTheme.colorScheme.secondary,
                         fontSize = 12.sp,
                     )
                 }
-                if (state.isLoading && !savedOnly) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                if (state.isLoading && listMode == StationListMode.DISCOVER) {
+                    CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                }
             }
         }
 
-        if (!savedOnly) state.error?.let { message ->
+        if (listMode == StationListMode.DISCOVER) state.error?.let { message ->
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
                     Text(message, Modifier.padding(14.dp), color = MaterialTheme.colorScheme.onErrorContainer)
@@ -206,16 +236,32 @@ fun RadioBrowseScreen(
             }
         }
 
-        if (savedOnly && visibleStations.isEmpty()) {
+        if (listMode != StationListMode.DISCOVER && visibleStations.isEmpty()) {
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Rounded.FavoriteBorder, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(42.dp))
                         Spacer(Modifier.height(8.dp))
-                        Text("No saved stations yet", fontWeight = FontWeight.Bold)
-                        Text("Tap the heart beside any station to keep it here.", fontSize = 13.sp)
+                        Text(
+                            if (listMode == StationListMode.SAVED) "No saved stations yet" else "No recently played stations",
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            if (listMode == StationListMode.SAVED) {
+                                "Tap the heart beside any station to keep it here."
+                            } else {
+                                "Stations you play will appear here."
+                            },
+                            fontSize = 13.sp,
+                        )
                     }
                 }
+            }
+        }
+
+        if (listMode == StationListMode.RECENT && visibleStations.isNotEmpty()) {
+            item {
+                TextButton(onClick = onClearRecent) { Text("Clear recent stations") }
             }
         }
 
@@ -226,6 +272,21 @@ fun RadioBrowseScreen(
                 onToggleSaved = { onToggleSaved(station) },
                 onPlay = { onPlay(station) },
             )
+        }
+        if (listMode == StationListMode.DISCOVER && visibleStations.isNotEmpty() && state.hasMore) {
+            item {
+                OutlinedButton(
+                    onClick = onLoadMore,
+                    enabled = !state.isLoadingMore,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (state.isLoadingMore) {
+                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(if (state.isLoadingMore) "Loading more…" else "Load more stations")
+                }
+            }
         }
         item { Spacer(Modifier.height(12.dp)) }
     }
@@ -344,6 +405,12 @@ private fun StationCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                Text(
+                    stationAvailabilityLine(station),
+                    color = if (station.isOnline) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
+                    fontSize = 10.sp,
+                    maxLines = 1,
+                )
             }
             IconButton(onClick = onToggleSaved) {
                 Icon(
@@ -362,9 +429,11 @@ fun RadioPlayerScreen(
     station: RadioStation,
     saved: Boolean,
     isPlaying: Boolean,
+    isBuffering: Boolean,
     error: String?,
     onBack: () -> Unit,
     onToggle: () -> Unit,
+    onRetry: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onToggleSaved: () -> Unit,
@@ -417,12 +486,16 @@ fun RadioPlayerScreen(
                 Row(Modifier.padding(horizontal = 13.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         Modifier.size(8.dp).clip(CircleShape).background(
-                            if (isPlaying) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            if (isPlaying || isBuffering) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                     )
                     Spacer(Modifier.width(7.dp))
                     Text(
-                        if (isPlaying) "STREAMING" else "READY",
+                        when {
+                            isBuffering -> "CONNECTING"
+                            isPlaying -> "STREAMING"
+                            else -> "READY"
+                        },
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.tertiary,
@@ -459,6 +532,7 @@ fun RadioPlayerScreen(
             error?.let {
                 Spacer(Modifier.height(12.dp))
                 Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+                TextButton(onClick = onRetry) { Text("Retry stream") }
             }
             Spacer(Modifier.weight(1f))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp)) {
@@ -466,11 +540,15 @@ fun RadioPlayerScreen(
                     Icon(Icons.Rounded.SkipPrevious, contentDescription = "Previous station", Modifier.size(36.dp))
                 }
                 FilledIconButton(onClick = onToggle, modifier = Modifier.size(78.dp)) {
-                    Icon(
-                        if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                        contentDescription = "Play or pause",
-                        modifier = Modifier.size(42.dp),
-                    )
+                    if (isBuffering) {
+                        CircularProgressIndicator(Modifier.size(34.dp), strokeWidth = 3.dp)
+                    } else {
+                        Icon(
+                            if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                            contentDescription = "Play or pause",
+                            modifier = Modifier.size(42.dp),
+                        )
+                    }
                 }
                 IconButton(onClick = onNext, modifier = Modifier.size(58.dp)) {
                     Icon(Icons.Rounded.SkipNext, contentDescription = "Next station", Modifier.size(36.dp))
@@ -499,6 +577,7 @@ fun RadioPlayerScreen(
 fun RadioMiniPlayer(
     station: RadioStation,
     isPlaying: Boolean,
+    isBuffering: Boolean,
     onOpen: () -> Unit,
     onToggle: () -> Unit,
 ) {
@@ -511,10 +590,19 @@ fun RadioMiniPlayer(
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("STREAM • ${station.country}", fontSize = 11.sp, color = MaterialTheme.colorScheme.tertiary, maxLines = 1)
+                Text(
+                    "${if (isBuffering) "CONNECTING" else "STREAM"} • ${station.country}",
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    maxLines = 1,
+                )
             }
             FilledIconButton(onClick = onToggle) {
-                Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = "Play or pause")
+                if (isBuffering) {
+                    CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = "Play or pause")
+                }
             }
         }
     }
@@ -580,18 +668,33 @@ private fun CountryDialog(countries: List<RadioCountry>, onSelect: (RadioCountry
     )
 }
 
-private fun radioResultTitle(state: RadioUiState): String = when {
-    state.selectedCountry != null -> "${countryFlag(state.selectedCountry.code)} ${state.selectedCountry.name}"
-    state.selectedTag != null -> state.selectedTag
-    state.query.isNotBlank() -> "Results for “${state.query}”"
-    else -> "Popular stations"
+private fun radioResultTitle(state: RadioUiState): String {
+    state.selectedCountry?.let { country ->
+        return "${countryFlag(country.code)} ${country.name}"
+    }
+    state.selectedTag?.let { return it }
+    return if (state.query.isNotBlank()) "Results for “${state.query}”" else "Popular stations"
 }
 
 private fun stationTechnicalLine(station: RadioStation): String = buildList {
+    if (station.isHls) add("HLS")
     if (station.codec.isNotBlank()) add(station.codec.uppercase())
     if (station.bitrate > 0) add("${station.bitrate} kbps")
     station.tags.firstOrNull()?.let(::add)
 }.joinToString(" • ")
+
+internal fun stationAvailabilityLine(station: RadioStation, now: Instant = Instant.now()): String {
+    val status = if (station.isOnline) "Online when checked" else "Offline when checked"
+    val checkedAt = runCatching { Instant.parse(station.lastCheckedAt) }.getOrNull() ?: return status
+    val age = Duration.between(checkedAt, now).coerceAtLeast(Duration.ZERO)
+    val ageLabel = when {
+        age.toMinutes() < 1 -> "just now"
+        age.toHours() < 1 -> "${age.toMinutes()}m ago"
+        age.toDays() < 1 -> "${age.toHours()}h ago"
+        else -> "${age.toDays()}d ago"
+    }
+    return "$status • $ageLabel"
+}
 
 private fun countryFlag(code: String): String {
     if (code.length != 2) return ""

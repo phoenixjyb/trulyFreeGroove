@@ -4,3 +4,8 @@ local.properties
 **/build/
 *.iml
 opengroove-*.png
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.swiftpm/
+iosApp/.build/

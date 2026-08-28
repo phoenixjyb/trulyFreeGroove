@@ -1,5 +1,6 @@
 package com.trulyfreemusic.opengroove.radio
 
+import com.trulyfreemusic.opengroove.BuildConfig
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -11,6 +12,7 @@ class RadioBrowserCatalog {
         name: String = "",
         countryCode: String? = null,
         tag: String? = null,
+        offset: Int = 0,
     ): List<RadioStation> {
         val parameters = linkedMapOf(
             "name" to name.trim(),
@@ -19,7 +21,8 @@ class RadioBrowserCatalog {
             "hidebroken" to "true",
             "order" to "clickcount",
             "reverse" to "true",
-            "limit" to "60",
+            "limit" to PAGE_SIZE.toString(),
+            "offset" to offset.coerceAtLeast(0).toString(),
         ).filterValues(String::isNotBlank)
         return request("/json/stations/search", parameters) { payload ->
             parseStations(JSONArray(payload))
@@ -72,6 +75,9 @@ class RadioBrowserCatalog {
                 codec = item.optString("codec"),
                 bitrate = item.optInt("bitrate"),
                 votes = item.optInt("votes"),
+                isOnline = item.optInt("lastcheckok", 1) == 1,
+                lastCheckedAt = item.optString("lastchecktime_iso8601"),
+                isHls = item.optInt("hls") == 1,
             )
             if (station.isPlayable() && seen.add(station.id)) add(station)
         }
@@ -89,7 +95,10 @@ class RadioBrowserCatalog {
                 connection.connectTimeout = 10_000
                 connection.readTimeout = 18_000
                 connection.setRequestProperty("Accept", "application/json")
-                connection.setRequestProperty("User-Agent", "OpenGroove/0.2 (personal Android internet radio app)")
+                connection.setRequestProperty(
+                    "User-Agent",
+                    "OpenGroove/${BuildConfig.VERSION_NAME} (personal Android internet radio app)",
+                )
                 try {
                     val code = connection.responseCode
                     if (code !in 200..299) throw IOException("Radio Browser returned HTTP $code")
@@ -107,7 +116,8 @@ class RadioBrowserCatalog {
     private fun String.encode(): String = URLEncoder.encode(this, Charsets.UTF_8.name())
     private fun String.encodePath(): String = replace(Regex("[^A-Za-z0-9-]"), "")
 
-    private companion object {
+    companion object {
+        const val PAGE_SIZE = 60
         val HOSTS = listOf(
             "all.api.radio-browser.info",
             "de1.api.radio-browser.info",
