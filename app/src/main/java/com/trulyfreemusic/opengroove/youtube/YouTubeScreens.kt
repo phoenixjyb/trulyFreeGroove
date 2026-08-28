@@ -59,6 +59,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +67,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -247,6 +250,12 @@ fun YouTubeWatchScreen(
     onToggleSaved: () -> Unit,
     onOpenExternal: (String) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(video.videoId) {
+        focusManager.clearFocus(force = true)
+        keyboardController?.hide()
+    }
     BackHandler(onBack = onBack)
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize()) {
@@ -403,6 +412,8 @@ private fun OfficialYouTubePlayer(
     val lifecycleOwner = LocalLifecycleOwner.current
     val activity = context.findActivity()
     val baseOrigin = "https://${BuildConfig.APPLICATION_ID.lowercase()}"
+    val playerUrl = remember(videoId, baseOrigin) { youtubeEmbedUrl(videoId, baseOrigin) }
+    val playerHeaders = remember(baseOrigin) { mapOf("Referer" to "$baseOrigin/") }
     val chromeClient = remember(videoId, activity) { OpenGrooveChromeClient(activity, onOpenExternal) }
     val webView = remember(videoId) {
         WebView(context).apply {
@@ -420,36 +431,40 @@ private fun OfficialYouTubePlayer(
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest): Boolean {
                     val url = request.url.toString()
                     if (url == "about:blank" || url.startsWith(baseOrigin)) return false
-                    if (!request.isForMainFrame && request.url.isYouTubeEmbedUrl()) return false
+                    if (request.url.isYouTubeEmbedUrl()) return false
                     if (request.url.scheme == "https" || request.url.scheme == "http") onOpenExternal(url)
                     return true
                 }
             }
-            loadDataWithBaseURL(
-                "$baseOrigin/",
-                youtubePlayerHtml(videoId, baseOrigin),
-                "text/html",
-                Charsets.UTF_8.name(),
-                null,
-            )
+            loadUrl(playerUrl, playerHeaders)
         }
     }
 
     DisposableEffect(lifecycleOwner, webView) {
+        var suspended = false
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP -> {
-                    webView.evaluateJavascript("pauseOpenGroovePlayer()", null)
+                    if (!suspended) {
+                        suspended = true
+                        webView.stopLoading()
+                        webView.loadUrl("about:blank")
+                    }
                     webView.onPause()
                 }
-                Lifecycle.Event.ON_RESUME -> webView.onResume()
+                Lifecycle.Event.ON_RESUME -> {
+                    webView.onResume()
+                    if (suspended) {
+                        suspended = false
+                        webView.loadUrl(playerUrl, playerHeaders)
+                    }
+                }
                 else -> Unit
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            webView.evaluateJavascript("pauseOpenGroovePlayer()", null)
             chromeClient.dispose()
             webView.stopLoading()
             webView.loadUrl("about:blank")
@@ -539,42 +554,19 @@ private class OpenGrooveChromeClient(
     }
 }
 
-private fun youtubePlayerHtml(videoId: String, baseOrigin: String): String = """
-    <!doctype html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-        <meta name="referrer" content="strict-origin-when-cross-origin">
-        <style>
-          html, body, #player { width: 100%; height: 100%; margin: 0; padding: 0; background: #000; overflow: hidden; }
-        </style>
-      </head>
-      <body>
-        <div id="player"></div>
-        <script src="https://www.youtube.com/iframe_api"></script>
-        <script>
-          var player;
-          function onYouTubeIframeAPIReady() {
-            player = new YT.Player('player', {
-              width: '100%',
-              height: '100%',
-              videoId: '$videoId',
-              playerVars: {
-                playsinline: 1,
-                autoplay: 0,
-                controls: 1,
-                fs: 1,
-                origin: '$baseOrigin'
-              }
-            });
-          }
-          function pauseOpenGroovePlayer() {
-            if (player && typeof player.pauseVideo === 'function') player.pauseVideo();
-          }
-        </script>
-      </body>
-    </html>
-""".trimIndent()
+private fun youtubeEmbedUrl(videoId: String, baseOrigin: String): String = Uri.Builder()
+    .scheme("https")
+    .authority("www.youtube.com")
+    .appendPath("embed")
+    .appendPath(videoId)
+    .appendQueryParameter("playsinline", "1")
+    .appendQueryParameter("autoplay", "0")
+    .appendQueryParameter("controls", "1")
+    .appendQueryParameter("fs", "1")
+    .appendQueryParameter("origin", baseOrigin)
+    .appendQueryParameter("widget_referrer", baseOrigin)
+    .build()
+    .toString()
 
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this

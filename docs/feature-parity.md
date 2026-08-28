@@ -31,11 +31,11 @@ Every product feature has one shared behavior contract and two platform acceptan
 
 - YouTube results use the official Data API v3 and are filtered to canonical, embeddable, syndicated video references before display.
 - Playback uses YouTube's visible IFrame player inside the operating-system WebView with the Android application ID supplied as the required HTTPS referrer identity.
-- The player does not autoplay and is paused and destroyed when its screen or app becomes hidden; OpenGroove never passes YouTube audiovisual content to Media3.
+- The player does not autoplay and is removed when its screen or app becomes hidden, then reloaded only after the app is visible again; OpenGroove never passes YouTube audiovisual content to Media3.
 - Saved video metadata is local-only and is refreshed or deleted after 30 days through the official API.
 - Android unit tests, lint and debug APK assembly pass locally: 33 tests, zero failures.
-- No credential is committed. Live search and playback remain blocked until an Android-restricted YouTube Data API key is configured and tested on the physical phone.
-- No emulator was used. The physical Android phone was not connected for this change, so installation, the Room 1-to-2 migration, layout, links, full-screen behavior and lifecycle pause still require device acceptance.
+- No credential is committed. A key-enabled APK was installed in place on the physical Samsung SM-S9280, the Room 1-to-2 database opened, and a live search returned embeddable results.
+- No emulator was used. The official player rendered its thumbnail, branding and controls, and the background/foreground cycle removed and reloaded it without a fatal exception. YouTube then required "Sign in to confirm that you're not a bot", so audiovisual playback, full-screen behavior and signed-in restrictions remain open physical-device gates.
 
 ## Current iOS build evidence
 
