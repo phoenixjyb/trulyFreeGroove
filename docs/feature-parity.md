@@ -17,15 +17,6 @@ Every product feature has one shared behavior contract and two platform acceptan
 | Podcast metadata refresh | Metadata-only, approximately 12-hour cadence | WorkManager periodic job | BGAppRefreshTask request; opportunistic system scheduling | Observe refresh on physical Android and iPhone under normal power/network conditions |
 | Theme | Product design tokens | System light/dark | System light/dark; simulator shell visually checked | Physical light/dark comparison |
 
-## Current iOS build evidence
-
-- Xcode 26.6 built the Debug application and passed tests for an iPhone 15 simulator running iOS 26.5.
-- The Xcode build phase linked the Kotlin `OpenGrooveShared` framework, and Swift resolved the shared playback-policy API.
-- Thirteen Swift tests passed in the iOS Simulator test bundle: five music catalog/handoff/playlist/policy tests, five podcast catalog/feed/persistence/control-contract tests, and three radio directory/recent-store tests.
-- The built application installed and launched in the simulator, and the initial SwiftUI shell rendered without a crash.
-- Discover, official handoffs, Library/create-playlist, Podcasts and direct publisher-RSS screens were visually checked in the iPhone 15 simulator.
-- This is simulator evidence only. Signing, installation, playback, background behavior, system controls and lifecycle acceptance on the target physical iPhone 15 remain open.
-
 ## Android reliability hardening evidence (2026-08-28)
 
 - Podcast completion now uses the shared rule requiring the later of 90% played or entry into the final 30 seconds; an unknown duration never completes an episode.
@@ -34,6 +25,15 @@ Every product feature has one shared behavior contract and two platform acceptan
 - Room retains at most ten unsubscribed podcast feed caches, while subscribed shows remain protected from pruning.
 - Android unit tests, lint and debug APK assembly pass locally: 28 tests, zero failures.
 - No emulator was used. The debug APK installed and launched without a fatal exception on a physical Samsung SM-X520, but streaming, background playback, notification and lock-screen controls, queue advance, playback speed, sleep timer, refresh and relaunch persistence still require hands-on acceptance.
+
+## Current iOS build evidence
+
+- Xcode 26.6 built the Debug application and passed tests for an iPhone 15 simulator running iOS 26.5.
+- The Xcode build phase linked the Kotlin `OpenGrooveShared` framework, and Swift resolved the shared playback-policy API.
+- Thirteen Swift tests passed in the iOS Simulator test bundle: five music catalog/handoff/playlist/policy tests, five podcast catalog/feed/persistence/control-contract tests, and three radio directory/recent-store tests.
+- The built application installed and launched in the simulator, and the initial SwiftUI shell rendered without a crash.
+- Discover, official handoffs, Library/create-playlist, Podcasts and direct publisher-RSS screens were visually checked in the iPhone 15 simulator.
+- This is simulator evidence only. Signing, installation, playback, background behavior, system controls and lifecycle acceptance on the target physical iPhone 15 remain open.
 
 ## Definition of done
 
