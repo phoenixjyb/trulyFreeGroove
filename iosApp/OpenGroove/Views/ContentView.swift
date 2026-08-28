@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @EnvironmentObject private var player: RadioPlayer
     @EnvironmentObject private var podcastPlayer: PodcastPlayer
     @EnvironmentObject private var podcastLibrary: PodcastLibraryStore
@@ -51,6 +52,9 @@ struct ContentView: View {
                 )
             }
             PodcastBackgroundRefresh.schedule()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase != .active { podcastPlayer.checkpointProgress() }
         }
     }
 }

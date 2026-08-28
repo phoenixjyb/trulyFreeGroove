@@ -17,8 +17,6 @@ final class RadioPlayer: ObservableObject {
     private var remoteTargets: [(MPRemoteCommand, Any)] = []
 
     init() {
-        configureAudioSession()
-        installRemoteCommands()
         statusObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
             Task { @MainActor in
                 self?.isPlaying = player.timeControlStatus == .playing
@@ -55,7 +53,7 @@ final class RadioPlayer: ObservableObject {
         if player.timeControlStatus == .playing {
             player.pause()
         } else {
-            player.play()
+            resumePlayback()
         }
     }
 
@@ -66,6 +64,7 @@ final class RadioPlayer: ObservableObject {
 
     func yieldRemoteControl() {
         player.pause()
+        if isActive { MPNowPlayingInfoCenter.default().nowPlayingInfo = nil }
         isActive = false
         removeRemoteCommands()
     }
@@ -82,32 +81,28 @@ final class RadioPlayer: ObservableObject {
         return true
     }
 
-    private func configureAudioSession() {
+    private func activateAudioSession() {
 #if os(iOS)
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .default)
-        } catch {
-            errorMessage = "Background audio could not be configured."
-        }
-#endif
-    }
-
-    private func activateAudioSession() {
-#if os(iOS)
-        do {
-            try AVAudioSession.sharedInstance().setActive(true)
+            try session.setActive(true)
         } catch {
             errorMessage = "Audio could not start because the system audio session is unavailable."
         }
 #endif
     }
 
+    private func resumePlayback() {
+        activateAudioSession()
+        player.play()
+    }
+
     private func installRemoteCommands() {
         guard remoteTargets.isEmpty else { return }
         let commands = MPRemoteCommandCenter.shared()
         remoteTargets.append((commands.playCommand, commands.playCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.player.play() }
+            Task { @MainActor in self?.resumePlayback() }
             return .success
         }))
         remoteTargets.append((commands.pauseCommand, commands.pauseCommand.addTarget { [weak self] _ in
@@ -138,10 +133,7 @@ final class RadioPlayer: ObservableObject {
     }
 
     private func updateNowPlaying() {
-        guard let station = currentStation else {
-            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
-            return
-        }
+        guard isActive, let station = currentStation else { return }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = [
             MPMediaItemPropertyTitle: station.name,
             MPMediaItemPropertyArtist: [station.country, station.language].filter { !$0.isEmpty }.joined(separator: " • "),
