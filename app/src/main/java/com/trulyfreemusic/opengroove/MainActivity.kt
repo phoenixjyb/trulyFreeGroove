@@ -306,15 +306,6 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         val listener = object : Player.Listener {
             override fun onIsPlayingChanged(playing: Boolean) {
                 isPlaying = playing
-                if (!playing) {
-                    currentPodcast?.let { episode ->
-                        viewModel.updatePodcastProgress(
-                            episode.episodeId,
-                            activePlayer.currentPosition,
-                            activePlayer.duration,
-                        )
-                    }
-                }
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -351,16 +342,9 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
 
     LaunchedEffect(isPlaying, currentTrack, currentPodcast, player) {
         val activePlayer = player ?: return@LaunchedEffect
-        var progressTicks = 0
         while (currentTrack != null || currentPodcast != null) {
             positionMs = activePlayer.currentPosition.coerceAtLeast(0L)
             if (activePlayer.duration > 0L) durationMs = activePlayer.duration
-            currentPodcast?.let { episode ->
-                if (progressTicks % 5 == 0) {
-                    viewModel.updatePodcastProgress(episode.episodeId, positionMs, durationMs)
-                }
-            }
-            progressTicks++
             delay(if (isPlaying) 1_000 else 2_000)
         }
     }
@@ -368,7 +352,12 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
     fun savePodcastProgress() {
         val episode = currentPodcast ?: return
         val activePlayer = player ?: return
-        viewModel.updatePodcastProgress(episode.episodeId, activePlayer.currentPosition, activePlayer.duration)
+        val playerDurationMs = activePlayer.duration.takeIf { it > 0L } ?: 0L
+        viewModel.updatePodcastProgress(
+            episode.episodeId,
+            activePlayer.currentPosition,
+            maxOf(playerDurationMs, episode.durationMs),
+        )
     }
 
     fun play(track: Track) {

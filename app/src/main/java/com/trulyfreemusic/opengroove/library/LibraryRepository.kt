@@ -4,6 +4,7 @@ import android.content.Context
 import com.trulyfreemusic.opengroove.model.PlaybackMode
 import com.trulyfreemusic.opengroove.model.Track
 import com.trulyfreemusic.opengroove.podcast.PodcastEpisode
+import com.trulyfreemusic.opengroove.podcast.PodcastProgressPolicy
 import com.trulyfreemusic.opengroove.podcast.PodcastShow
 import com.trulyfreemusic.opengroove.radio.RadioStation
 import com.trulyfreemusic.opengroove.radio.toRadioStationOrNull
@@ -103,7 +104,8 @@ class LibraryRepository(private val context: Context) {
                 refreshedAt = now,
             ),
         )
-        dao.replacePodcastMetadata(episodes.map(PodcastEpisode::toEntity))
+        dao.replacePodcastMetadata(show.feedUrl, episodes.take(MAX_CACHED_EPISODES_PER_FEED).map(PodcastEpisode::toEntity))
+        dao.pruneUnsubscribedPodcastCache(MAX_CACHED_UNSUBSCRIBED_FEEDS)
     }
 
     suspend fun setPodcastSubscribed(show: PodcastShow, subscribed: Boolean) {
@@ -113,6 +115,7 @@ class LibraryRepository(private val context: Context) {
         } else {
             dao.setPodcastSubscribed(show.feedUrl, subscribed, System.currentTimeMillis())
         }
+        dao.pruneUnsubscribedPodcastCache(MAX_CACHED_UNSUBSCRIBED_FEEDS)
     }
 
     suspend fun episode(episodeId: String): PodcastEpisode? =
@@ -120,7 +123,7 @@ class LibraryRepository(private val context: Context) {
 
     suspend fun updateEpisodeProgress(episodeId: String, positionMs: Long, durationMs: Long) {
         val safeDuration = durationMs.coerceAtLeast(0L)
-        val completed = safeDuration > 0 && positionMs >= safeDuration - 30_000L
+        val completed = PodcastProgressPolicy.isCompleted(positionMs, safeDuration)
         dao.updateEpisodeProgress(
             episodeId = episodeId,
             positionMs = if (completed) 0L else positionMs.coerceAtLeast(0L),
@@ -146,6 +149,8 @@ class LibraryRepository(private val context: Context) {
 
     private companion object {
         const val MIGRATION_KEY = "preferences_to_room_v1"
+        const val MAX_CACHED_EPISODES_PER_FEED = 250
+        const val MAX_CACHED_UNSUBSCRIBED_FEEDS = 10
     }
 }
 

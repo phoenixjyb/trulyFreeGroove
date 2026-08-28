@@ -26,6 +26,15 @@ Every product feature has one shared behavior contract and two platform acceptan
 - Discover, official handoffs, Library/create-playlist, Podcasts and direct publisher-RSS screens were visually checked in the iPhone 15 simulator.
 - This is simulator evidence only. Signing, installation, playback, background behavior, system controls and lifecycle acceptance on the target physical iPhone 15 remain open.
 
+## Android reliability hardening evidence (2026-08-28)
+
+- Podcast completion now uses the shared rule requiring the later of 90% played or entry into the final 30 seconds; an unknown duration never completes an episode.
+- `PlaybackService` owns background-safe podcast progress checkpoints every 15 seconds and on pause, completion and episode transitions.
+- Publisher feeds preserve nested description text, reject malformed durations and responses larger than 8 MiB, and retain at most 250 episodes per feed.
+- Room retains at most ten unsubscribed podcast feed caches, while subscribed shows remain protected from pruning.
+- Android unit tests, lint and debug APK assembly pass locally: 28 tests, zero failures.
+- No emulator was used. The debug APK installed and launched without a fatal exception on a physical Samsung SM-X520, but streaming, background playback, notification and lock-screen controls, queue advance, playback speed, sleep timer, refresh and relaunch persistence still require hands-on acceptance.
+
 ## Definition of done
 
 1. Portable behavior lives in `shared/src/commonMain` and is covered in `commonTest`.

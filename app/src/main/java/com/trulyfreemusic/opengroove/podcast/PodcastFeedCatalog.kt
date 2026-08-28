@@ -3,6 +3,7 @@ package com.trulyfreemusic.opengroove.podcast
 import com.trulyfreemusic.opengroove.BuildConfig
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -22,7 +23,9 @@ class PodcastFeedCatalog {
             connection.setRequestProperty("User-Agent", "OpenGroove/${BuildConfig.VERSION_NAME}")
             val status = connection.responseCode
             if (status !in 200..299) error("Podcast feed returned HTTP $status.")
-            connection.inputStream.buffered().use { parse(it, feedUrl, fallback) }
+            if (connection.contentLengthLong > MAX_FEED_BYTES) error("This podcast feed is too large to process safely.")
+            val payload = connection.inputStream.buffered().use { it.readLimitedBytes(MAX_FEED_BYTES) }
+            parse(payload.inputStream(), feedUrl, fallback)
         } finally {
             connection.disconnect()
         }
@@ -50,12 +53,12 @@ class PodcastFeedCatalog {
                         episode = EpisodeBuilder()
                     }
                     inItem -> when (name) {
-                        "title" -> episode.title = parser.safeText()
-                        "guid", "id" -> episode.guid = parser.safeText()
-                        "description", "summary", "encoded" -> episode.description = parser.safeText()
-                        "author", "creator" -> episode.author = parser.safeText()
-                        "pubdate", "published", "updated" -> episode.publishedAt = parsePodcastDate(parser.safeText())
-                        "duration" -> episode.durationMs = parsePodcastDuration(parser.safeText())
+                        "title" -> episode.title = parser.readTextContent()
+                        "guid", "id" -> episode.guid = parser.readTextContent()
+                        "description", "summary", "encoded" -> episode.description = parser.readTextContent()
+                        "author", "creator" -> episode.author = parser.readTextContent()
+                        "pubdate", "published", "updated" -> episode.publishedAt = parsePodcastDate(parser.readTextContent())
+                        "duration" -> episode.durationMs = parsePodcastDuration(parser.readTextContent())
                         "link" -> {
                             val href = parser.attribute("href")
                             val relation = parser.attribute("rel")
@@ -66,7 +69,7 @@ class PodcastFeedCatalog {
                             } else if (href.isHttpUrl()) {
                                 episode.websiteUrl = href
                             } else {
-                                episode.websiteUrl = parser.safeText()
+                                episode.websiteUrl = parser.readTextContent()
                             }
                         }
                         "enclosure" -> {
@@ -78,13 +81,13 @@ class PodcastFeedCatalog {
                         }
                     }
                     else -> when (name) {
-                        "title" -> if (channelTitle.isBlank()) channelTitle = parser.safeText()
-                        "author", "creator" -> if (channelAuthor.isBlank()) channelAuthor = parser.safeText()
-                        "description", "subtitle" -> if (channelDescription.isBlank()) channelDescription = parser.safeText()
+                        "title" -> if (channelTitle.isBlank()) channelTitle = parser.readTextContent()
+                        "author", "creator" -> if (channelAuthor.isBlank()) channelAuthor = parser.readTextContent()
+                        "description", "subtitle" -> if (channelDescription.isBlank()) channelDescription = parser.readTextContent()
                         "link" -> {
                             val href = parser.attribute("href")
                             if (href.isHttpUrl()) channelWebsite = href else {
-                                val text = parser.safeText()
+                                val text = parser.readTextContent()
                                 if (text.isHttpUrl()) channelWebsite = text
                             }
                         }
@@ -93,7 +96,7 @@ class PodcastFeedCatalog {
                             if (artwork.isHttpUrl()) channelArtwork = artwork
                         }
                         "url" -> {
-                            val text = parser.safeText()
+                            val text = parser.readTextContent()
                             if (text.isHttpUrl() && channelArtwork.isBlank()) channelArtwork = text
                         }
                     }
@@ -128,6 +131,7 @@ class PodcastFeedCatalog {
 
     private companion object {
         const val MAX_EPISODES = 250
+        const val MAX_FEED_BYTES = 8L * 1_024L * 1_024L
     }
 }
 
@@ -167,7 +171,31 @@ private fun XmlPullParser.attribute(name: String): String =
     (0 until attributeCount).firstOrNull { getAttributeName(it).equals(name, ignoreCase = true) }
         ?.let(::getAttributeValue).orEmpty()
 
-private fun XmlPullParser.safeText(): String = runCatching { nextText().trim() }.getOrDefault("")
+private fun XmlPullParser.readTextContent(): String {
+    val elementDepth = depth
+    val textContent = StringBuilder()
+    while (eventType != XmlPullParser.END_DOCUMENT) {
+        when (next()) {
+            XmlPullParser.TEXT, XmlPullParser.CDSECT, XmlPullParser.ENTITY_REF -> textContent.append(text)
+            XmlPullParser.END_TAG -> if (depth == elementDepth) return textContent.toString().trim()
+        }
+    }
+    return textContent.toString().trim()
+}
+
+private fun InputStream.readLimitedBytes(maxBytes: Long): ByteArray {
+    val output = ByteArrayOutputStream()
+    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+    var total = 0L
+    while (true) {
+        val count = read(buffer)
+        if (count < 0) break
+        total += count
+        if (total > maxBytes) error("This podcast feed is too large to process safely.")
+        output.write(buffer, 0, count)
+    }
+    return output.toByteArray()
+}
 
 internal fun cleanPodcastText(text: String): String = text
     .replace(Regex("<[^>]+>"), " ")
