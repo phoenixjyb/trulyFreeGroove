@@ -252,6 +252,9 @@ fun YouTubeWatchScreen(
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
+    val openSignedInPlayback: () -> Unit = {
+        video.watchUrl()?.let(onOpenExternal)
+    }
     LaunchedEffect(video.videoId) {
         focusManager.clearFocus(force = true)
         keyboardController?.hide()
@@ -276,13 +279,13 @@ fun YouTubeWatchScreen(
                         contentDescription = if (saved) "Remove saved video" else "Save video",
                     )
                 }
-                IconButton(onClick = { video.watchUrl()?.let(onOpenExternal) }) {
-                    Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = "Open in YouTube")
+                IconButton(onClick = openSignedInPlayback) {
+                    Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = "Watch using signed-in browser")
                 }
             }
             OfficialYouTubePlayer(
                 videoId = video.videoId,
-                onOpenExternal = onOpenExternal,
+                onOpenExternal = { openSignedInPlayback() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
@@ -305,8 +308,14 @@ fun YouTubeWatchScreen(
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
                 )
-                Button(onClick = { video.watchUrl()?.let(onOpenExternal) }) {
-                    Text("Open in YouTube")
+                Text(
+                    "If YouTube requests sign-in or bot verification, use the signed-in browser tab below. " +
+                        "Its Back button returns here; Google sign-in cannot be completed inside an embedded WebView.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+                Button(onClick = openSignedInPlayback) {
+                    Text("Watch signed in")
                     Spacer(Modifier.width(6.dp))
                     Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null, Modifier.size(17.dp))
                 }

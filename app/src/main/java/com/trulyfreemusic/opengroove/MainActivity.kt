@@ -9,6 +9,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.browser.customtabs.CustomTabsClient
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -769,7 +771,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
               saved = savedYouTubeVideos.any { it.videoId == video.videoId },
               onBack = { currentYouTubeVideo = null },
               onToggleSaved = { viewModel.toggleSavedYouTubeVideo(video) },
-              onOpenExternal = context::openUrl,
+              onOpenExternal = context::openYouTubeCustomTab,
           )
       }
     }
@@ -1218,6 +1220,22 @@ private fun Context.openUrl(url: String) {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (_: ActivityNotFoundException) {
         // No browser or provider app is installed; leave the current screen intact.
+    }
+}
+
+private fun Context.openYouTubeCustomTab(url: String) {
+    val uri = Uri.parse(url)
+    val allowedHosts = setOf("youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be")
+    if (uri.scheme != "https" || uri.host?.lowercase() !in allowedHosts) return
+    val customTab = CustomTabsIntent.Builder()
+        .setShowTitle(true)
+        .setUrlBarHidingEnabled(false)
+        .build()
+    CustomTabsClient.getPackageName(this, null)?.let(customTab.intent::setPackage)
+    try {
+        customTab.launchUrl(this, uri)
+    } catch (_: ActivityNotFoundException) {
+        openUrl(url)
     }
 }
 

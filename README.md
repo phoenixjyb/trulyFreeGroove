@@ -12,6 +12,7 @@ This repository now contains the existing Android app, a native SwiftUI iOS coun
 - See the provider, source page, and license for every playable result.
 - Search YouTube Music, YouTube, Spotify, QQ Music, or NetEase Cloud Music through their official web/app experience.
 - Optionally search embeddable YouTube music videos and watch them without leaving the Android app through YouTube's visible official IFrame player.
+- Fall back to an official browser-backed YouTube tab when YouTube requires account or bot verification; the tab shares the browser's sign-in state and has an integrated return control.
 - Save YouTube video references locally; cached title, channel, thumbnail, and availability metadata is refreshed or removed within 30 days.
 - Create local playlists and add or remove tracks.
 - Keep playlists, saved/recent stations, podcast subscriptions, episodes, and playback progress in a Room database. Existing preference-backed playlists and radio data migrate automatically once.

@@ -35,7 +35,7 @@ Every product feature has one shared behavior contract and two platform acceptan
 - Saved video metadata is local-only and is refreshed or deleted after 30 days through the official API.
 - Android unit tests, lint and debug APK assembly pass locally: 33 tests, zero failures.
 - No credential is committed. A key-enabled APK was installed in place on the physical Samsung SM-S9280, the Room 1-to-2 database opened, and a live search returned embeddable results.
-- No emulator was used. The official player rendered its thumbnail, branding and controls, and the background/foreground cycle removed and reloaded it without a fatal exception. YouTube then required "Sign in to confirm that you're not a bot", so audiovisual playback, full-screen behavior and signed-in restrictions remain open physical-device gates.
+- No emulator was used. The official player rendered its thumbnail, branding and controls, and the background/foreground cycle removed and reloaded it without a fatal exception. YouTube then required "Sign in to confirm that you're not a bot". A browser-backed Custom Tab fallback is built to share the browser's signed-in session and provide an integrated return control, but the phone disconnected before that fallback could be installed and physically accepted. Audiovisual playback and full-screen behavior remain open device gates.
 
 ## Current iOS build evidence
 

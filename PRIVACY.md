@@ -12,6 +12,8 @@ OpenGroove contacts Wikimedia Commons, an optionally configured Jamendo account,
 
 Opening the in-app YouTube Watch screen loads YouTube's official embedded player. YouTube receives the app identity/referrer and the normal data required to render the player, enforce availability and account restrictions, prevent abuse, and serve any applicable advertising. The player does not autoplay; loading its thumbnail and controls may still contact YouTube before the user presses Play. YouTube's privacy policy and terms apply.
 
+If YouTube requires sign-in or bot verification, the user can choose the signed-in browser fallback. It opens the official YouTube watch page in an Android Custom Tab, which uses the selected browser's existing cookies, account state, privacy settings, and history behavior. OpenGroove cannot read or copy those browser cookies.
+
 When a user opens YouTube Music, YouTube, Spotify, QQ Music, NetEase Cloud Music, a station or podcast website, a source page, or a license page, that destination handles the visit under its own privacy policy.
 
 ## Playback
