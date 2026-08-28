@@ -18,14 +18,24 @@ final class PodcastViewModel: ObservableObject {
     @Published private(set) var errorMessage: String?
 
     private let catalog = PodcastCatalog()
+    private var searchGeneration = 0
 
     func search() async {
+        searchGeneration += 1
+        let generation = searchGeneration
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+        defer {
+            if generation == searchGeneration { isLoading = false }
+        }
+        let querySnapshot = query
+        let languageSnapshot = language
         do {
-            results = try await catalog.search(query: query, language: language)
+            let freshResults = try await catalog.search(query: querySnapshot, language: languageSnapshot)
+            guard generation == searchGeneration, !Task.isCancelled else { return }
+            results = freshResults
         } catch {
+            guard generation == searchGeneration, !Task.isCancelled else { return }
             results = []
             errorMessage = error.localizedDescription
         }

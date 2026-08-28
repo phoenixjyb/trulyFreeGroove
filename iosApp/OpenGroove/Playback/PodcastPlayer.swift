@@ -25,9 +25,13 @@ final class PodcastPlayer: ObservableObject {
     private var endObserver: AnyCancellable?
     private var sleepTimer: Timer?
     private var remoteTargets: [(MPRemoteCommand, Any)] = []
+    private var lastCheckpointEpisodeID: String?
+    private var lastCheckpointPosition: TimeInterval = 0
+    private var lastCheckpointDuration: TimeInterval = 0
+
+    private static let checkpointInterval: TimeInterval = 15
 
     init() {
-        configureAudioSession()
         statusObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
             Task { @MainActor in
                 self?.isPlaying = player.timeControlStatus == .playing
@@ -42,12 +46,17 @@ final class PodcastPlayer: ObservableObject {
             Task { @MainActor in self?.recordProgress(time.seconds) }
         }
         endObserver = NotificationCenter.default.publisher(for: AVPlayerItem.didPlayToEndTimeNotification)
-            .sink { [weak self] _ in
+            .sink { [weak self] notification in
                 Task { @MainActor in
-                    guard let self else { return }
+                    guard
+                        let self,
+                        let endedItem = notification.object as? AVPlayerItem,
+                        endedItem === self.player.currentItem
+                    else { return }
+                    self.position = self.duration
                     if !self.skip(offset: 1) {
+                        self.emitProgress(force: true)
                         self.player.pause()
-                        self.position = self.duration
                         self.updateNowPlaying()
                     }
                 }
@@ -72,10 +81,9 @@ final class PodcastPlayer: ObservableObject {
 
     func togglePlayback() {
         if player.timeControlStatus == .playing {
-            player.pause()
+            pauseAndCheckpoint()
         } else {
-            activateAudioSession()
-            player.playImmediately(atRate: speed)
+            resumePlayback()
         }
     }
 
@@ -105,7 +113,7 @@ final class PodcastPlayer: ObservableObject {
         sleepTimerEnd = Date().addingTimeInterval(TimeInterval(minutes * 60))
         sleepTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(minutes * 60), repeats: false) { [weak self] _ in
             Task { @MainActor in
-                self?.player.pause()
+                self?.pauseAndCheckpoint()
                 self?.sleepTimerEnd = nil
                 self?.sleepTimer = nil
             }
@@ -126,9 +134,11 @@ final class PodcastPlayer: ObservableObject {
         queue.remove(atOffsets: offsets)
         if removedCurrent {
             if queue.isEmpty {
-                player.pause()
+                pauseAndCheckpoint()
+                if isActive { MPNowPlayingInfoCenter.default().nowPlayingInfo = nil }
                 self.currentEpisode = nil
                 isActive = false
+                removeRemoteCommands()
             } else {
                 currentIndex = min(currentIndex, queue.count - 1)
                 start(queue[currentIndex])
@@ -161,15 +171,24 @@ final class PodcastPlayer: ObservableObject {
     }
 
     func deactivateForRadio() {
-        player.pause()
+        pauseAndCheckpoint()
+        if isActive { MPNowPlayingInfoCenter.default().nowPlayingInfo = nil }
         isActive = false
         removeRemoteCommands()
     }
 
+    func checkpointProgress() {
+        emitProgress(force: true)
+    }
+
     private func start(_ episode: PodcastEpisode) {
+        emitProgress(force: true)
         currentEpisode = episode
         position = max(episode.position, 0)
         duration = max(episode.duration, 0)
+        lastCheckpointEpisodeID = episode.id
+        lastCheckpointPosition = position
+        lastCheckpointDuration = duration
         errorMessage = nil
         activateAudioSession()
 
@@ -197,24 +216,47 @@ final class PodcastPlayer: ObservableObject {
         position = seconds
         let itemDuration = player.currentItem?.duration.seconds ?? 0
         if itemDuration.isFinite && itemDuration > 0 { duration = itemDuration }
-        progressHandler?(episode, position, duration)
+        if let sleepTimerEnd, sleepTimerEnd <= Date() {
+            pauseAndCheckpoint()
+            self.sleepTimerEnd = nil
+            sleepTimer?.invalidate()
+            sleepTimer = nil
+            return
+        }
+        if episode.id != lastCheckpointEpisodeID || abs(position - lastCheckpointPosition) >= Self.checkpointInterval {
+            emitProgress(force: false)
+        }
         updateNowPlaying()
     }
 
-    private func configureAudioSession() {
-#if os(iOS)
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
-        } catch {
-            errorMessage = "Background podcast audio could not be configured."
-        }
-#endif
+    private func emitProgress(force: Bool) {
+        guard let episode = currentEpisode else { return }
+        let changedEpisode = episode.id != lastCheckpointEpisodeID
+        let movedEnough = abs(position - lastCheckpointPosition) >= Self.checkpointInterval
+        let changedSinceCheckpoint = position != lastCheckpointPosition || duration != lastCheckpointDuration
+        guard changedEpisode || movedEnough || (force && changedSinceCheckpoint) else { return }
+        progressHandler?(episode, position, duration)
+        lastCheckpointEpisodeID = episode.id
+        lastCheckpointPosition = position
+        lastCheckpointDuration = duration
+    }
+
+    private func pauseAndCheckpoint() {
+        player.pause()
+        emitProgress(force: true)
+    }
+
+    private func resumePlayback() {
+        activateAudioSession()
+        player.playImmediately(atRate: speed)
     }
 
     private func activateAudioSession() {
 #if os(iOS)
         do {
-            try AVAudioSession.sharedInstance().setActive(true)
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .spokenAudio)
+            try session.setActive(true)
         } catch {
             errorMessage = "Audio could not start because the system audio session is unavailable."
         }
@@ -226,11 +268,11 @@ final class PodcastPlayer: ObservableObject {
         let commands = MPRemoteCommandCenter.shared()
         commands.changePlaybackPositionCommand.isEnabled = true
         remoteTargets.append((commands.playCommand, commands.playCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.player.playImmediately(atRate: self?.speed ?? 1) }
+            Task { @MainActor in self?.resumePlayback() }
             return .success
         }))
         remoteTargets.append((commands.pauseCommand, commands.pauseCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.player.pause() }
+            Task { @MainActor in self?.pauseAndCheckpoint() }
             return .success
         }))
         remoteTargets.append((commands.togglePlayPauseCommand, commands.togglePlayPauseCommand.addTarget { [weak self] _ in

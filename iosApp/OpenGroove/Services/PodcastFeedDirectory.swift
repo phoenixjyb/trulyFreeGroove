@@ -6,6 +6,7 @@ enum PodcastFeedError: LocalizedError, Sendable {
     case unavailable
     case invalidFeed
     case noPlayableEpisodes
+    case feedTooLarge
 
     var errorDescription: String? {
         switch self {
@@ -13,6 +14,7 @@ enum PodcastFeedError: LocalizedError, Sendable {
         case .unavailable: "Could not reach the publisher's podcast feed."
         case .invalidFeed: "The publisher returned an invalid RSS or Atom feed."
         case .noPlayableEpisodes: "No playable audio episodes were found in this feed."
+        case .feedTooLarge: "This podcast feed is too large to process safely."
         }
     }
 }
@@ -32,6 +34,7 @@ struct PodcastFeedDirectory: Sendable {
             guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
                 throw PodcastFeedError.unavailable
             }
+            guard data.count <= 8 * 1_024 * 1_024 else { throw PodcastFeedError.feedTooLarge }
             return try parse(data, feedURL: feedURL, fallback: fallback)
         } catch let error as PodcastFeedError {
             throw error
@@ -52,8 +55,7 @@ struct PodcastFeedDirectory: Sendable {
 private final class PodcastXMLDelegate: NSObject, XMLParserDelegate {
     private let feedURL: URL
     private let fallback: PodcastShow?
-    private var currentElement = ""
-    private var currentText = ""
+    private var textStack: [String] = []
     private var inEpisode = false
 
     private var channelTitle = ""
@@ -76,16 +78,16 @@ private final class PodcastXMLDelegate: NSObject, XMLParserDelegate {
         qualifiedName qName: String?,
         attributes attributeDict: [String: String] = [:]
     ) {
-        currentElement = normalized(qName ?? elementName)
-        currentText = ""
-        if currentElement == "item" || currentElement == "entry" {
+        let element = normalized(qName ?? elementName)
+        textStack.append("")
+        if element == "item" || element == "entry" {
             inEpisode = true
             currentEpisode = EpisodeBuilder()
             return
         }
 
         if inEpisode {
-            switch currentElement {
+            switch element {
             case "enclosure":
                 currentEpisode.audioURL = publicURL(attributeDict["url"])
                 currentEpisode.mimeType = attributeDict["type"] ?? ""
@@ -105,7 +107,7 @@ private final class PodcastXMLDelegate: NSObject, XMLParserDelegate {
                 break
             }
         } else {
-            switch currentElement {
+            switch element {
             case "link":
                 if let href = publicURL(attributeDict["href"]) { channelWebsiteURL = href }
             case "image":
@@ -119,11 +121,12 @@ private final class PodcastXMLDelegate: NSObject, XMLParserDelegate {
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
-        currentText += string
+        for index in textStack.indices { textStack[index] += string }
     }
 
     func parser(_ parser: XMLParser, foundCDATA CDATABlock: Data) {
-        currentText += String(data: CDATABlock, encoding: .utf8) ?? ""
+        let text = String(data: CDATABlock, encoding: .utf8) ?? ""
+        for index in textStack.indices { textStack[index] += text }
     }
 
     func parser(
@@ -133,7 +136,7 @@ private final class PodcastXMLDelegate: NSObject, XMLParserDelegate {
         qualifiedName qName: String?
     ) {
         let name = normalized(qName ?? elementName)
-        let text = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = (textStack.popLast() ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
 
         if (name == "item" || name == "entry") && inEpisode {
             if episodes.count < 250,
@@ -146,7 +149,6 @@ private final class PodcastXMLDelegate: NSObject, XMLParserDelegate {
                 episodes.append(episode)
             }
             inEpisode = false
-            currentText = ""
             return
         }
 
@@ -173,7 +175,6 @@ private final class PodcastXMLDelegate: NSObject, XMLParserDelegate {
             default: break
             }
         }
-        currentText = ""
     }
 
     func feed() throws -> PodcastFeed {
@@ -250,22 +251,35 @@ private func stableEpisodeID(feedURL: URL, guid: String, audioURL: URL) -> Strin
 }
 
 func parsePodcastDuration(_ value: String) -> TimeInterval {
-    let parts = value.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: ":")
-        .compactMap { Int($0) }
-    let seconds: Int
+    let rawParts = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        .split(separator: ":", omittingEmptySubsequences: false)
+    guard (1...3).contains(rawParts.count) else { return 0 }
+    var parts: [Double] = []
+    for rawPart in rawParts {
+        guard let part = Double(rawPart), part.isFinite, part >= 0 else { return 0 }
+        parts.append(part)
+    }
+    if parts.count >= 2, parts.last! >= 60 { return 0 }
+    if parts.count == 3, parts[1] >= 60 { return 0 }
+    let seconds: Double
     switch parts.count {
     case 1: seconds = parts[0]
     case 2: seconds = parts[0] * 60 + parts[1]
     case 3: seconds = parts[0] * 3600 + parts[1] * 60 + parts[2]
     default: return 0
     }
-    return TimeInterval(max(seconds, 0))
+    return seconds.isFinite ? seconds : 0
 }
 
 private func parsePodcastDate(_ value: String) -> Date? {
     let iso = ISO8601DateFormatter()
     if let date = iso.date(from: value) { return date }
-    for format in ["EEE, dd MMM yyyy HH:mm:ss Z", "EEE, d MMM yyyy HH:mm:ss Z"] {
+    for format in [
+        "EEE, dd MMM yyyy HH:mm:ss Z",
+        "EEE, d MMM yyyy HH:mm:ss Z",
+        "EEE, dd MMM yyyy HH:mm Z",
+        "EEE, d MMM yyyy HH:mm Z",
+    ] {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = format

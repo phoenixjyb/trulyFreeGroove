@@ -117,8 +117,11 @@ enum OfficialMusicProvider: String, CaseIterable, Identifiable {
         case .youtube:
             return queryURL("https://www.youtube.com/results", name: "search_query", value: query)
         case .spotify:
-            let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "music"
-            return URL(string: "https://open.spotify.com/search/\(encoded)")
+            let unreserved = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
+            let encoded = query.addingPercentEncoding(withAllowedCharacters: unreserved) ?? "music"
+            var components = URLComponents(string: "https://open.spotify.com")
+            components?.percentEncodedPath = "/search/\(encoded)"
+            return components?.url
         case .qqMusic:
             var components = URLComponents(string: "https://y.qq.com/n/ryqq/search")
             components?.queryItems = [URLQueryItem(name: "w", value: query), URLQueryItem(name: "t", value: "song")]
