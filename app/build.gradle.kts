@@ -12,6 +12,8 @@ val localProperties = Properties().apply {
 }
 val configuredJamendoClientId =
     localProperties.getProperty("JAMENDO_CLIENT_ID") ?: System.getenv("JAMENDO_CLIENT_ID").orEmpty()
+val configuredYouTubeApiKey =
+    localProperties.getProperty("YOUTUBE_API_KEY") ?: System.getenv("YOUTUBE_API_KEY").orEmpty()
 
 android {
     namespace = "com.trulyfreemusic.opengroove"
@@ -21,8 +23,8 @@ android {
         applicationId = "com.trulyfreemusic.opengroove"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.6.0"
+        versionCode = 8
+        versionName = "0.7.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -31,11 +33,15 @@ android {
         debug {
             buildConfigField("String", "JAMENDO_CLIENT_ID", "\"$configuredJamendoClientId\"")
             buildConfigField("boolean", "JAMENDO_CONFIGURED", configuredJamendoClientId.isNotBlank().toString())
+            buildConfigField("String", "YOUTUBE_API_KEY", "\"$configuredYouTubeApiKey\"")
+            buildConfigField("boolean", "YOUTUBE_CONFIGURED", configuredYouTubeApiKey.isNotBlank().toString())
         }
         release {
             isMinifyEnabled = false
             buildConfigField("String", "JAMENDO_CLIENT_ID", "\"$configuredJamendoClientId\"")
             buildConfigField("boolean", "JAMENDO_CONFIGURED", configuredJamendoClientId.isNotBlank().toString())
+            buildConfigField("String", "YOUTUBE_API_KEY", "\"$configuredYouTubeApiKey\"")
+            buildConfigField("boolean", "YOUTUBE_CONFIGURED", configuredYouTubeApiKey.isNotBlank().toString())
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

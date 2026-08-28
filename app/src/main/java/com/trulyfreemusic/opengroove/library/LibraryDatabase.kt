@@ -11,6 +11,8 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "playlists")
@@ -78,6 +80,21 @@ data class RecentStationEntity(
     val lastCheckedAt: String,
     val isHls: Boolean,
     val playedAt: Long,
+)
+
+@Entity(tableName = "saved_youtube_videos", indices = [Index("savedAt"), Index("metadataRefreshedAtMs")])
+data class SavedYouTubeVideoEntity(
+    @androidx.room.PrimaryKey val videoId: String,
+    val title: String,
+    val channelTitle: String,
+    val thumbnailUrl: String,
+    val durationSeconds: Int,
+    val publishedAtMs: Long,
+    val embeddable: Boolean,
+    val madeForKids: Boolean?,
+    val isLive: Boolean,
+    val metadataRefreshedAtMs: Long,
+    val savedAt: Long,
 )
 
 @Entity(tableName = "podcast_shows")
@@ -161,6 +178,24 @@ interface LibraryDao {
 
     @Query("DELETE FROM recent_stations WHERE stationId NOT IN (SELECT stationId FROM recent_stations ORDER BY playedAt DESC LIMIT 20)")
     suspend fun trimRecentStations()
+
+    @Query("SELECT * FROM saved_youtube_videos WHERE metadataRefreshedAtMs >= :freshAfterMs ORDER BY savedAt DESC")
+    fun observeSavedYouTubeVideos(freshAfterMs: Long): Flow<List<SavedYouTubeVideoEntity>>
+
+    @Query("SELECT * FROM saved_youtube_videos WHERE videoId = :videoId LIMIT 1")
+    suspend fun savedYouTubeVideo(videoId: String): SavedYouTubeVideoEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertSavedYouTubeVideo(video: SavedYouTubeVideoEntity)
+
+    @Query("DELETE FROM saved_youtube_videos WHERE videoId = :videoId")
+    suspend fun deleteSavedYouTubeVideo(videoId: String)
+
+    @Query("SELECT videoId FROM saved_youtube_videos WHERE metadataRefreshedAtMs < :freshAfterMs ORDER BY savedAt DESC")
+    suspend fun staleSavedYouTubeVideoIds(freshAfterMs: Long): List<String>
+
+    @Query("DELETE FROM saved_youtube_videos WHERE videoId IN (:videoIds)")
+    suspend fun deleteSavedYouTubeVideos(videoIds: List<String>)
 
     @Query("SELECT * FROM podcast_shows WHERE subscribed = 1 ORDER BY subscribedAt DESC")
     fun observeSubscriptions(): Flow<List<PodcastShowEntity>>
@@ -273,8 +308,9 @@ interface LibraryDao {
         RecentStationEntity::class,
         PodcastShowEntity::class,
         PodcastEpisodeEntity::class,
+        SavedYouTubeVideoEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class OpenGrooveDatabase : RoomDatabase() {
@@ -288,7 +324,34 @@ abstract class OpenGrooveDatabase : RoomDatabase() {
                 context.applicationContext,
                 OpenGrooveDatabase::class.java,
                 "open_groove_library.db",
-            ).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+        }
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS saved_youtube_videos (
+                        videoId TEXT NOT NULL PRIMARY KEY,
+                        title TEXT NOT NULL,
+                        channelTitle TEXT NOT NULL,
+                        thumbnailUrl TEXT NOT NULL,
+                        durationSeconds INTEGER NOT NULL,
+                        publishedAtMs INTEGER NOT NULL,
+                        embeddable INTEGER NOT NULL,
+                        madeForKids INTEGER,
+                        isLive INTEGER NOT NULL,
+                        metadataRefreshedAtMs INTEGER NOT NULL,
+                        savedAt INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_saved_youtube_videos_savedAt ON saved_youtube_videos (savedAt)")
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_saved_youtube_videos_metadataRefreshedAtMs " +
+                        "ON saved_youtube_videos (metadataRefreshedAtMs)",
+                )
+            }
         }
     }
 }

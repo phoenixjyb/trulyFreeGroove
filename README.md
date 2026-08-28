@@ -11,6 +11,8 @@ This repository now contains the existing Android app, a native SwiftUI iOS coun
 - Filter discovery by English, Chinese, or Cantonese. Cantonese catalog matching is explicitly heuristic because Jamendo exposes `zh` but not a separate Cantonese language code.
 - See the provider, source page, and license for every playable result.
 - Search YouTube Music, YouTube, Spotify, QQ Music, or NetEase Cloud Music through their official web/app experience.
+- Optionally search embeddable YouTube music videos and watch them without leaving the Android app through YouTube's visible official IFrame player.
+- Save YouTube video references locally; cached title, channel, thumbnail, and availability metadata is refreshed or removed within 30 days.
 - Create local playlists and add or remove tracks.
 - Keep playlists, saved/recent stations, podcast subscriptions, episodes, and playback progress in a Room database. Existing preference-backed playlists and radio data migrate automatically once.
 - Play, pause, and seek within an authorized Jamendo stream.
@@ -55,20 +57,24 @@ OpenGroove has no account, advertising SDK, or analytics. Playlists, saved stati
 
 Requirements: JDK 17 and Android SDK 36.
 
-1. Create a Jamendo developer application at <https://devportal.jamendo.com/>.
-2. Put the public client ID in your untracked `local.properties` file:
+1. Create a Jamendo developer application at <https://devportal.jamendo.com/> if you want the optional Jamendo catalog.
+2. To enable Android YouTube search, create a Google Cloud project, enable YouTube Data API v3, and create an API key restricted to:
+   - Android application ID `com.trulyfreemusic.opengroove` and the signing certificate SHA-1 shown by `./gradlew signingReport`;
+   - YouTube Data API v3 only.
+3. Put either optional credential in your untracked `local.properties` file:
 
    ```properties
    JAMENDO_CLIENT_ID=your_client_id
+   YOUTUBE_API_KEY=your_android_restricted_api_key
    ```
 
-3. Build the debug APK:
+4. Build the debug APK:
 
    ```bash
    ./gradlew assembleDebug
    ```
 
-Jamendo is optional. Without a client ID, the app still searches and streams license-explicit audio from Wikimedia Commons. No third-party test credential is bundled.
+Both credentials are optional. Without them, the app still searches and streams license-explicit audio from Wikimedia Commons and retains the official external YouTube handoff. No third-party test credential is bundled.
 
 ## Cross-platform verification
 
@@ -94,7 +100,7 @@ Full Xcode and XcodeGen are required to generate and build the iPhone applicatio
 - use HTTPS; and
 - include a license URL.
 
-YouTube Music, YouTube, Spotify, and similar services should remain `EXTERNAL_ONLY` unless their official SDK and current terms explicitly grant in-app playback for the intended use. Non-commercial distribution does not waive copyright or provider terms.
+YouTube audiovisual content is never represented as a direct `Track` stream. Android's optional YouTube Watch screen uses the visible official IFrame player and stops when that screen or app is no longer visible. YouTube Music, Spotify, and similar services remain `EXTERNAL_ONLY` unless their official SDK and current terms explicitly grant in-app playback for the intended use. Non-commercial distribution does not waive copyright or provider terms.
 
 ## Before sharing the APK
 

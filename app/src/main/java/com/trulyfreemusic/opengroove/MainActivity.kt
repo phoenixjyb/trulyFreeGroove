@@ -43,6 +43,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -122,6 +123,9 @@ import com.trulyfreemusic.opengroove.radio.RadioMiniPlayer
 import com.trulyfreemusic.opengroove.radio.RadioPlayerScreen
 import com.trulyfreemusic.opengroove.radio.RadioStation
 import com.trulyfreemusic.opengroove.ui.MainViewModel
+import com.trulyfreemusic.opengroove.youtube.YouTubeBrowseScreen
+import com.trulyfreemusic.opengroove.youtube.YouTubeVideo
+import com.trulyfreemusic.opengroove.youtube.YouTubeWatchScreen
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -186,7 +190,7 @@ private fun OpenGrooveTheme(content: @Composable () -> Unit) {
     )
 }
 
-private enum class AppSection { DISCOVER, RADIO, PODCASTS, LIBRARY }
+private enum class AppSection { DISCOVER, YOUTUBE, RADIO, PODCASTS, LIBRARY }
 
 @Composable
 private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
@@ -199,12 +203,15 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
     val podcastState by viewModel.podcastState.collectAsStateWithLifecycle()
     val podcastSubscriptions by viewModel.podcastSubscriptions.collectAsStateWithLifecycle()
     val unplayedPodcastEpisodes by viewModel.unplayedPodcastEpisodes.collectAsStateWithLifecycle()
+    val youtubeState by viewModel.youtubeState.collectAsStateWithLifecycle()
+    val savedYouTubeVideos by viewModel.savedYouTubeVideos.collectAsStateWithLifecycle()
     var section by remember { mutableStateOf(AppSection.DISCOVER) }
     var addTrack by remember { mutableStateOf<Track?>(null) }
     var showCreatePlaylist by remember { mutableStateOf(false) }
     var currentTrack by remember { mutableStateOf<Track?>(null) }
     var currentStation by remember { mutableStateOf<RadioStation?>(null) }
     var currentPodcast by remember { mutableStateOf<PodcastEpisode?>(null) }
+    var currentYouTubeVideo by remember { mutableStateOf<YouTubeVideo?>(null) }
     var radioQueue by remember { mutableStateOf(emptyList<RadioStation>()) }
     var showRadioPlayer by remember { mutableStateOf(false) }
     var showPodcastPlayer by remember { mutableStateOf(false) }
@@ -453,6 +460,23 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         }
     }
 
+    fun watchYouTube(video: YouTubeVideo) {
+        if (!video.isWatchable()) return
+        savePodcastProgress()
+        player?.run {
+            pause()
+            stop()
+            clearMediaItems()
+        }
+        currentTrack = null
+        currentStation = null
+        currentPodcast = null
+        showRadioPlayer = false
+        showPodcastPlayer = false
+        playerError = null
+        currentYouTubeVideo = video
+    }
+
     fun addPodcastToQueue(episode: PodcastEpisode) {
         val activePlayer = player
         if (activePlayer == null) {
@@ -589,6 +613,12 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                         label = { Text("Discover") },
                     )
                     NavigationBarItem(
+                        selected = section == AppSection.YOUTUBE,
+                        onClick = { section = AppSection.YOUTUBE },
+                        icon = { Icon(Icons.Rounded.SmartDisplay, contentDescription = null) },
+                        label = { Text("YouTube") },
+                    )
+                    NavigationBarItem(
                         selected = section == AppSection.RADIO,
                         onClick = { section = AppSection.RADIO },
                         icon = { Icon(Icons.Rounded.Radio, contentDescription = null) },
@@ -653,6 +683,17 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                     onClearRecent = viewModel::clearRecentStations,
                     onLoadMore = viewModel::loadMoreRadio,
                     onPlay = ::playStation,
+                )
+                AppSection.YOUTUBE -> YouTubeBrowseScreen(
+                    state = youtubeState,
+                    savedVideos = savedYouTubeVideos,
+                    configured = viewModel.youtubeConfigured,
+                    onQueryChange = viewModel::setYouTubeQuery,
+                    onLanguageChange = viewModel::setYouTubeLanguage,
+                    onSearch = viewModel::searchYouTube,
+                    onWatch = ::watchYouTube,
+                    onToggleSaved = viewModel::toggleSavedYouTubeVideo,
+                    onOpenUrl = context::openUrl,
                 )
                 AppSection.PODCASTS -> PodcastBrowseScreen(
                     state = podcastState,
@@ -720,6 +761,15 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
               onSleepTimer = ::setSleepTimer,
               onJumpTo = ::jumpToPodcast,
               onRemove = ::removePodcastFromQueue,
+          )
+      }
+      currentYouTubeVideo?.let { video ->
+          YouTubeWatchScreen(
+              video = video,
+              saved = savedYouTubeVideos.any { it.videoId == video.videoId },
+              onBack = { currentYouTubeVideo = null },
+              onToggleSaved = { viewModel.toggleSavedYouTubeVideo(video) },
+              onOpenExternal = context::openUrl,
           )
       }
     }
