@@ -70,6 +70,16 @@ Requirements: JDK 17 and Android SDK 36.
 
 Jamendo is optional. Without a client ID, the app still searches and streams license-explicit audio from Wikimedia Commons. No third-party test credential is bundled.
 
+## Cross-platform verification
+
+On a Mac with JDK 17, Android SDK 36, full Xcode, and XcodeGen installed, run the complete Android and iOS verification gate with one command:
+
+```bash
+./scripts/verify-all.sh
+```
+
+The script runs the Android unit tests, debug APK build, and lint, then generates the Xcode project and runs the iOS unit tests on an available iPhone simulator. Use `./scripts/verify-all.sh android` or `./scripts/verify-all.sh ios` to run one platform gate. GitHub Actions invokes these same entry points in separate jobs for every pull request and for pushes to `main` or `feature/**` branches.
+
 ## iOS development
 
 The iOS source is under `iosApp`. It mirrors the Android use cases with native SwiftUI/AVPlayer adapters: licensed Wikimedia discovery and optional Jamendo, official music-platform handoffs, local playlists, Radio Browser discovery/saved/recent lists, Apple podcast discovery plus publisher RSS/Atom feeds, subscriptions and Unplayed inbox, queue/resume/speed/sleep controls, background audio and system commands. See [docs/feature-parity.md](docs/feature-parity.md) for the separate simulator and physical-device gates.
