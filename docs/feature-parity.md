@@ -6,6 +6,7 @@ Every product feature has one shared behavior contract and two platform acceptan
 |---|---|---|---|---|
 | Licensed music discovery | Track model, language scopes and fail-closed direct-playback policy | Wikimedia Commons plus optional Jamendo adapter | Wikimedia Commons plus optional Jamendo adapter built and unit-tested on iOS Simulator | Live catalog checks and attribution review on both physical phones |
 | Official music handoffs | External-only boundary | YouTube Music, YouTube, Spotify, QQ Music and NetEase | Same five official HTTPS search handoffs built and URL-tested | Open each installed-app/web fallback on both physical phones |
+| Official YouTube search and watch | Canonical video reference, embeddable-only policy, visible-player boundary | Data API v3 adapter, saved references and official IFrame player built; API key and device acceptance open | External handoff only | Add the `WKWebView` adapter, then verify real searches, visible playback, lifecycle pause, links, ads and restrictions on both phones |
 | Licensed music playback | HTTPS stream plus public license evidence | Media3 service and seek controls | AVPlayer, seek and system commands built on iOS Simulator | Physical background, interruption and system-control checks on both phones |
 | Local playlists | Track identity and provider/license metadata | Room persistence | Local Codable persistence built and unit-tested on iOS Simulator | Persistence/lifecycle checks on both physical phones |
 | Internet radio discovery | Station validity and browse vocabulary | Implemented | Built and unit-tested on iOS Simulator | Physical iPhone search and browsing |
@@ -25,6 +26,16 @@ Every product feature has one shared behavior contract and two platform acceptan
 - Room retains at most ten unsubscribed podcast feed caches, while subscribed shows remain protected from pruning.
 - Android unit tests, lint and debug APK assembly pass locally: 28 tests, zero failures.
 - No emulator was used. The debug APK installed and launched without a fatal exception on a physical Samsung SM-X520, but streaming, background playback, notification and lock-screen controls, queue advance, playback speed, sleep timer, refresh and relaunch persistence still require hands-on acceptance.
+
+## Android YouTube Watch implementation evidence
+
+- YouTube results use the official Data API v3 and are filtered to canonical, embeddable, syndicated video references before display.
+- Playback uses YouTube's visible IFrame player inside the operating-system WebView with the Android application ID supplied as the required HTTPS referrer identity.
+- The player does not autoplay and is removed when its screen or app becomes hidden, then reloaded only after the app is visible again; OpenGroove never passes YouTube audiovisual content to Media3.
+- Saved video metadata is local-only and is refreshed or deleted after 30 days through the official API.
+- Android unit tests, lint and debug APK assembly pass locally: 33 tests, zero failures.
+- No credential is committed. A key-enabled APK was installed in place on the physical Samsung SM-S9280, the Room 1-to-2 database opened, and a live search returned embeddable results.
+- No emulator was used. The official player rendered its thumbnail, branding and controls, and the background/foreground cycle removed and reloaded it without a fatal exception. YouTube then required "Sign in to confirm that you're not a bot". A browser-backed Custom Tab fallback is built to share the browser's signed-in session and provide an integrated return control, but the phone disconnected before that fallback could be installed and physically accepted. Audiovisual playback and full-screen behavior remain open device gates.
 
 ## Current iOS build evidence
 

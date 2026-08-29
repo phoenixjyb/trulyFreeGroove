@@ -8,6 +8,7 @@ import com.trulyfreemusic.opengroove.podcast.PodcastProgressPolicy
 import com.trulyfreemusic.opengroove.podcast.PodcastShow
 import com.trulyfreemusic.opengroove.radio.RadioStation
 import com.trulyfreemusic.opengroove.radio.toRadioStationOrNull
+import com.trulyfreemusic.opengroove.youtube.YouTubeVideo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -32,6 +33,10 @@ class LibraryRepository(private val context: Context) {
 
     val recentStations: Flow<List<RadioStation>> =
         dao.observeRecentStations().map { stations -> stations.map(RecentStationEntity::toRadioStation) }
+
+    val savedYouTubeVideos: Flow<List<YouTubeVideo>> =
+        dao.observeSavedYouTubeVideos(System.currentTimeMillis() - YOUTUBE_METADATA_MAX_AGE_MS)
+            .map { videos -> videos.map(SavedYouTubeVideoEntity::toYouTubeVideo) }
 
     val subscriptions: Flow<List<PodcastShow>> =
         dao.observeSubscriptions().map { shows -> shows.map(PodcastShowEntity::toPodcastShow) }
@@ -87,6 +92,32 @@ class LibraryRepository(private val context: Context) {
     }
 
     suspend fun clearRecentStations() = dao.clearRecentStations()
+
+    suspend fun toggleSavedYouTubeVideo(video: YouTubeVideo) {
+        val existing = dao.savedYouTubeVideo(video.videoId)
+        val freshAfter = System.currentTimeMillis() - YOUTUBE_METADATA_MAX_AGE_MS
+        if (existing != null && existing.metadataRefreshedAtMs >= freshAfter) {
+            dao.deleteSavedYouTubeVideo(video.videoId)
+        } else {
+            dao.upsertSavedYouTubeVideo(
+                video.toEntity(savedAt = existing?.savedAt ?: System.currentTimeMillis()),
+            )
+        }
+    }
+
+    suspend fun staleSavedYouTubeVideoIds(): List<String> =
+        dao.staleSavedYouTubeVideoIds(System.currentTimeMillis() - YOUTUBE_METADATA_MAX_AGE_MS)
+
+    suspend fun refreshSavedYouTubeVideos(videos: List<YouTubeVideo>) {
+        videos.forEach { video ->
+            val existing = dao.savedYouTubeVideo(video.videoId) ?: return@forEach
+            dao.upsertSavedYouTubeVideo(video.toEntity(savedAt = existing.savedAt))
+        }
+    }
+
+    suspend fun deleteSavedYouTubeVideos(videoIds: List<String>) {
+        if (videoIds.isNotEmpty()) dao.deleteSavedYouTubeVideos(videoIds)
+    }
 
     fun episodes(feedUrl: String): Flow<List<PodcastEpisode>> =
         dao.observePodcastEpisodes(feedUrl).map { episodes -> episodes.map(PodcastEpisodeEntity::toPodcastEpisode) }
@@ -151,6 +182,7 @@ class LibraryRepository(private val context: Context) {
         const val MIGRATION_KEY = "preferences_to_room_v1"
         const val MAX_CACHED_EPISODES_PER_FEED = 250
         const val MAX_CACHED_UNSUBSCRIBED_FEEDS = 10
+        const val YOUTUBE_METADATA_MAX_AGE_MS = 30L * 24L * 60L * 60L * 1_000L
     }
 }
 
@@ -222,6 +254,33 @@ private fun PlaylistTrackEntity.toTrack() = Track(
     sourceUrl = sourceUrl,
     licenseUrl = licenseUrl,
     playbackMode = runCatching { PlaybackMode.valueOf(playbackMode) }.getOrDefault(PlaybackMode.EXTERNAL_ONLY),
+)
+
+private fun YouTubeVideo.toEntity(savedAt: Long) = SavedYouTubeVideoEntity(
+    videoId = videoId,
+    title = title,
+    channelTitle = channelTitle,
+    thumbnailUrl = thumbnailUrl,
+    durationSeconds = durationSeconds,
+    publishedAtMs = publishedAtMs,
+    embeddable = embeddable,
+    madeForKids = madeForKids,
+    isLive = isLive,
+    metadataRefreshedAtMs = metadataRefreshedAtMs,
+    savedAt = savedAt,
+)
+
+private fun SavedYouTubeVideoEntity.toYouTubeVideo() = YouTubeVideo(
+    videoId = videoId,
+    title = title,
+    channelTitle = channelTitle,
+    thumbnailUrl = thumbnailUrl,
+    durationSeconds = durationSeconds,
+    publishedAtMs = publishedAtMs,
+    embeddable = embeddable,
+    madeForKids = madeForKids,
+    isLive = isLive,
+    metadataRefreshedAtMs = metadataRefreshedAtMs,
 )
 
 private fun RadioStation.toSavedEntity(timestamp: Long) = SavedStationEntity(

@@ -19,6 +19,9 @@ import com.trulyfreemusic.opengroove.radio.RadioBrowserCatalog
 import com.trulyfreemusic.opengroove.radio.RadioCountry
 import com.trulyfreemusic.opengroove.radio.RadioStation
 import com.trulyfreemusic.opengroove.radio.RadioUiState
+import com.trulyfreemusic.opengroove.youtube.YouTubeCatalog
+import com.trulyfreemusic.opengroove.youtube.YouTubeUiState
+import com.trulyfreemusic.opengroove.youtube.YouTubeVideo
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,14 +48,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val radioCatalog = RadioBrowserCatalog()
     private val applePodcastCatalog = ApplePodcastCatalog()
     private val podcastFeedCatalog = PodcastFeedCatalog()
+    private val youtubeCatalog = BuildConfig.YOUTUBE_API_KEY.takeIf(String::isNotBlank)?.let { key ->
+        YouTubeCatalog(application, key)
+    }
     private val mutableSearchState = MutableStateFlow(SearchUiState())
     private val mutableRadioState = MutableStateFlow(RadioUiState())
     private val mutablePodcastState = MutableStateFlow(PodcastUiState())
+    private val mutableYouTubeState = MutableStateFlow(YouTubeUiState())
     private var searchJob: Job? = null
     private var radioJob: Job? = null
     private var podcastSearchJob: Job? = null
     private var podcastFeedJob: Job? = null
     private var podcastEpisodesJob: Job? = null
+    private var youtubeSearchJob: Job? = null
 
     val searchState: StateFlow<SearchUiState> = mutableSearchState.asStateFlow()
     val playlists: StateFlow<Map<String, List<Track>>> = library.playlists.stateIn(
@@ -72,12 +80,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val unplayedPodcastEpisodes: StateFlow<List<PodcastEpisode>> = library.unplayedPodcastEpisodes.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList(),
     )
+    val youtubeState: StateFlow<YouTubeUiState> = mutableYouTubeState.asStateFlow()
+    val savedYouTubeVideos: StateFlow<List<YouTubeVideo>> = library.savedYouTubeVideos.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList(),
+    )
     val jamendoConfigured: Boolean = BuildConfig.JAMENDO_CONFIGURED
+    val youtubeConfigured: Boolean = BuildConfig.YOUTUBE_CONFIGURED
 
     init {
         viewModelScope.launch(Dispatchers.IO) { runCatching { library.migrateLegacyData() } }
         search("")
         loadRadio()
+        refreshStaleSavedYouTubeVideos()
     }
 
     fun setQuery(query: String) {
@@ -145,6 +159,56 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun removeFromPlaylist(playlistName: String, trackId: String) {
         viewModelScope.launch(Dispatchers.IO) { library.removeFromPlaylist(playlistName, trackId) }
+    }
+
+    fun setYouTubeQuery(query: String) {
+        mutableYouTubeState.value = mutableYouTubeState.value.copy(query = query)
+    }
+
+    fun setYouTubeLanguage(language: SearchLanguage) {
+        mutableYouTubeState.value = mutableYouTubeState.value.copy(language = language)
+    }
+
+    fun searchYouTube() {
+        val snapshot = mutableYouTubeState.value
+        val catalog = youtubeCatalog
+        if (catalog == null) {
+            mutableYouTubeState.value = snapshot.copy(
+                isSearching = false,
+                error = "Add a restricted YouTube Data API key to enable in-app search.",
+            )
+            return
+        }
+        if (snapshot.query.isBlank()) {
+            mutableYouTubeState.value = snapshot.copy(
+                isSearching = false,
+                error = "Type a song, artist, or channel before searching YouTube.",
+            )
+            return
+        }
+        youtubeSearchJob?.cancel()
+        youtubeSearchJob = viewModelScope.launch {
+            mutableYouTubeState.value = snapshot.copy(isSearching = true, error = null)
+            runCatching {
+                withContext(Dispatchers.IO) { catalog.search(snapshot.query, snapshot.language) }
+            }.onSuccess { videos ->
+                mutableYouTubeState.value = mutableYouTubeState.value.copy(
+                    results = videos,
+                    isSearching = false,
+                    error = if (videos.isEmpty()) "No embeddable YouTube videos matched this search." else null,
+                )
+            }.onFailure { error ->
+                if (error is CancellationException) return@onFailure
+                mutableYouTubeState.value = mutableYouTubeState.value.copy(
+                    isSearching = false,
+                    error = error.message ?: "YouTube search failed. Check the key, quota, and connection.",
+                )
+            }
+        }
+    }
+
+    fun toggleSavedYouTubeVideo(video: YouTubeVideo) {
+        viewModelScope.launch(Dispatchers.IO) { library.toggleSavedYouTubeVideo(video) }
     }
 
     fun setRadioQuery(query: String) {
@@ -323,6 +387,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun registerStationClick(stationId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             runCatching { radioCatalog.registerClick(stationId) }
+        }
+    }
+
+    private fun refreshStaleSavedYouTubeVideos() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val staleIds = library.staleSavedYouTubeVideoIds()
+            if (staleIds.isEmpty()) return@launch
+            val catalog = youtubeCatalog
+            if (catalog == null) {
+                library.deleteSavedYouTubeVideos(staleIds)
+                return@launch
+            }
+            staleIds.chunked(50).forEach { ids ->
+                val refreshed = try {
+                    catalog.details(ids)
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (_: Exception) {
+                    library.deleteSavedYouTubeVideos(ids)
+                    return@forEach
+                }
+                library.refreshSavedYouTubeVideos(refreshed)
+                library.deleteSavedYouTubeVideos(ids - refreshed.map(YouTubeVideo::videoId).toSet())
+            }
         }
     }
 
