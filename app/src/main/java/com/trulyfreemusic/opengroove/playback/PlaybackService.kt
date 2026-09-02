@@ -33,6 +33,7 @@ class PlaybackService : MediaSessionService() {
     private val progressScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val progressWriteMutex = Mutex()
     private val library by lazy { LibraryRepository(applicationContext) }
+    private val musicQueueStore by lazy { MusicQueueStore(applicationContext) }
     private var sleepTimerEndAtMs = 0L
     private var lastPodcastDurationMs = 0L
     private var lastSavedPodcastPositionMs = 0L
@@ -43,6 +44,7 @@ class PlaybackService : MediaSessionService() {
     private val progressCheckpointAction = object : Runnable {
         override fun run() {
             checkpointCurrentPodcast(force = false)
+            persistCurrentMusicQueue()
             progressHandler.postDelayed(this, PROGRESS_CHECKPOINT_INTERVAL_MS)
         }
     }
@@ -61,32 +63,57 @@ class PlaybackService : MediaSessionService() {
                 newPosition: Player.PositionInfo,
                 reason: Int,
             ) {
-                val previousEpisode = oldPosition.mediaItem?.toPodcastEpisodeOrNull() ?: return
-                val nextEpisodeId = newPosition.mediaItem?.toPodcastEpisodeOrNull()?.episodeId
-                if (previousEpisode.episodeId == nextEpisodeId) return
-                val durationMs = maxOf(lastPodcastDurationMs, previousEpisode.durationMs)
-                val positionMs = if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION && durationMs > 0L) {
-                    durationMs
-                } else {
-                    oldPosition.positionMs.coerceAtLeast(0L)
+                oldPosition.mediaItem?.toPodcastEpisodeOrNull()?.let { previousEpisode ->
+                    val nextEpisodeId = newPosition.mediaItem?.toPodcastEpisodeOrNull()?.episodeId
+                    if (previousEpisode.episodeId != nextEpisodeId) {
+                        val durationMs = maxOf(lastPodcastDurationMs, previousEpisode.durationMs)
+                        val positionMs = if (
+                            reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION && durationMs > 0L
+                        ) {
+                            durationMs
+                        } else {
+                            oldPosition.positionMs.coerceAtLeast(0L)
+                        }
+                        persistPodcastProgress(previousEpisode.episodeId, positionMs, durationMs)
+                    }
                 }
-                persistPodcastProgress(previousEpisode.episodeId, positionMs, durationMs)
+                persistCurrentMusicQueue()
+            }
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (!isPlaying) {
+                    checkpointCurrentPodcast(force = true)
+                    persistCurrentMusicQueue()
+                }
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED) {
+                    checkpointCurrentPodcast(force = true, useDuration = true)
+                    persistCurrentMusicQueue()
+                }
+            }
+
+            override fun onTimelineChanged(timeline: androidx.media3.common.Timeline, reason: Int) {
+                persistCurrentMusicQueue()
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 val episode = mediaItem?.toPodcastEpisodeOrNull()
                 lastPodcastDurationMs = episode?.durationMs?.coerceAtLeast(0L) ?: 0L
                 lastSavedPodcastPositionMs = episode?.positionMs?.coerceAtLeast(0L) ?: 0L
+                persistCurrentMusicQueue()
             }
 
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (!isPlaying) checkpointCurrentPodcast(force = true)
+            override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                persistCurrentMusicQueue()
             }
 
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_ENDED) checkpointCurrentPodcast(force = true, useDuration = true)
+            override fun onRepeatModeChanged(repeatMode: Int) {
+                persistCurrentMusicQueue()
             }
         })
+        restoreMusicQueue(player)
         exoPlayer = player
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(object : MediaSession.Callback {
@@ -133,6 +160,7 @@ class PlaybackService : MediaSessionService() {
         sleepTimerHandler.removeCallbacks(sleepTimerAction)
         progressHandler.removeCallbacks(progressCheckpointAction)
         sleepTimerEndAtMs = 0L
+        persistCurrentMusicQueue()
         mediaSession?.run {
             player.release()
             release()
@@ -178,6 +206,42 @@ class PlaybackService : MediaSessionService() {
                 library.updateEpisodeProgress(episodeId, positionMs, durationMs)
             }
         }
+    }
+
+    private fun restoreMusicQueue(player: ExoPlayer) {
+        val snapshot = musicQueueStore.load() ?: return
+        val mediaItems = snapshot.tracks.map { it.toMediaItem() }
+        if (mediaItems.isEmpty()) return
+        player.shuffleModeEnabled = snapshot.shuffleEnabled
+        player.repeatMode = snapshot.repeatMode
+        player.setMediaItems(mediaItems, snapshot.currentIndex, snapshot.positionMs)
+        player.prepare()
+    }
+
+    private fun persistCurrentMusicQueue() {
+        val player = exoPlayer ?: return
+        val tracks = buildList {
+            for (index in 0 until player.mediaItemCount) {
+                val track = player.getMediaItemAt(index).toTrackOrNull() ?: run {
+                    musicQueueStore.clear()
+                    return
+                }
+                add(track)
+            }
+        }
+        if (tracks.isEmpty() || player.currentMediaItem?.toTrackOrNull() == null) {
+            musicQueueStore.clear()
+            return
+        }
+        musicQueueStore.save(
+            MusicQueueSnapshot(
+                tracks = tracks,
+                currentIndex = player.currentMediaItemIndex.coerceIn(tracks.indices),
+                positionMs = player.currentPosition.coerceAtLeast(0L),
+                shuffleEnabled = player.shuffleModeEnabled,
+                repeatMode = player.repeatMode,
+            ),
+        )
     }
 
     private companion object {
