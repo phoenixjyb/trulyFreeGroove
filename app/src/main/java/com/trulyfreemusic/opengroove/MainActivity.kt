@@ -34,6 +34,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Delete
@@ -111,6 +112,8 @@ import com.trulyfreemusic.opengroove.model.Track
 import com.trulyfreemusic.opengroove.data.SearchLanguage
 import com.trulyfreemusic.opengroove.playback.PlaybackCommands
 import com.trulyfreemusic.opengroove.playback.PlaybackService
+import com.trulyfreemusic.opengroove.playback.MusicMiniPlayer
+import com.trulyfreemusic.opengroove.playback.MusicPlayerScreen
 import com.trulyfreemusic.opengroove.playback.toMediaItem
 import com.trulyfreemusic.opengroove.playback.toPodcastEpisodeOrNull
 import com.trulyfreemusic.opengroove.playback.toRadioStationOrNull
@@ -209,11 +212,17 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
     val savedYouTubeVideos by viewModel.savedYouTubeVideos.collectAsStateWithLifecycle()
     var section by remember { mutableStateOf(AppSection.DISCOVER) }
     var addTrack by remember { mutableStateOf<Track?>(null) }
+    var queueTrack by remember { mutableStateOf<Track?>(null) }
     var showCreatePlaylist by remember { mutableStateOf(false) }
     var currentTrack by remember { mutableStateOf<Track?>(null) }
     var currentStation by remember { mutableStateOf<RadioStation?>(null) }
     var currentPodcast by remember { mutableStateOf<PodcastEpisode?>(null) }
     var currentYouTubeVideo by remember { mutableStateOf<YouTubeVideo?>(null) }
+    var musicQueue by remember { mutableStateOf(emptyList<Track>()) }
+    var musicQueueIndex by remember { mutableIntStateOf(-1) }
+    var showMusicPlayer by remember { mutableStateOf(false) }
+    var shuffleEnabled by remember { mutableStateOf(false) }
+    var repeatMode by remember { mutableIntStateOf(Player.REPEAT_MODE_OFF) }
     var radioQueue by remember { mutableStateOf(emptyList<RadioStation>()) }
     var showRadioPlayer by remember { mutableStateOf(false) }
     var showPodcastPlayer by remember { mutableStateOf(false) }
@@ -227,6 +236,19 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
     var positionMs by remember { mutableLongStateOf(0L) }
     var durationMs by remember { mutableLongStateOf(1L) }
     var player by remember { mutableStateOf<MediaController?>(null) }
+
+    fun reflectMusicQueue(controller: Player) {
+        val reflected = buildList {
+            for (index in 0 until controller.mediaItemCount) {
+                val track = controller.getMediaItemAt(index).toTrackOrNull() ?: return@buildList
+                add(track)
+            }
+        }
+        musicQueue = if (reflected.size == controller.mediaItemCount) reflected else emptyList()
+        musicQueueIndex = if (musicQueue.isEmpty()) -1 else controller.currentMediaItemIndex
+        shuffleEnabled = controller.shuffleModeEnabled
+        repeatMode = controller.repeatMode
+    }
 
     fun reflectPodcastQueue(controller: Player) {
         podcastQueue = buildList {
@@ -260,6 +282,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                 currentTrack = null
                 currentStation = null
                 currentPodcast = null
+                showMusicPlayer = false
             }
             track != null -> {
                 currentTrack = track
@@ -272,12 +295,14 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                 currentTrack = null
                 currentStation = station
                 currentPodcast = null
+                showMusicPlayer = false
                 showPodcastPlayer = false
             }
             podcast != null -> {
                 currentTrack = null
                 currentStation = null
                 currentPodcast = podcast
+                showMusicPlayer = false
                 showRadioPlayer = false
             }
         }
@@ -294,6 +319,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                         isPlaying = controller.isPlaying
                         isBuffering = controller.playbackState == Player.STATE_BUFFERING
                         playbackSpeed = controller.playbackParameters.speed
+                        reflectMusicQueue(controller)
                         reflectPodcastQueue(controller)
                         querySleepTimer(controller)
                         player = controller
@@ -332,15 +358,29 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 reflectMediaItem(mediaItem)
+                reflectMusicQueue(activePlayer)
                 reflectPodcastQueue(activePlayer)
+                mediaItem?.toTrackOrNull()?.let { track ->
+                    positionMs = activePlayer.currentPosition.coerceAtLeast(0L)
+                    durationMs = (track.durationSeconds * 1_000L).coerceAtLeast(1L)
+                }
             }
 
             override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                reflectMusicQueue(activePlayer)
                 reflectPodcastQueue(activePlayer)
             }
 
             override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
                 playbackSpeed = playbackParameters.speed
+            }
+
+            override fun onShuffleModeEnabledChanged(enabled: Boolean) {
+                shuffleEnabled = enabled
+            }
+
+            override fun onRepeatModeChanged(mode: Int) {
+                repeatMode = mode
             }
         }
         activePlayer.addListener(listener)
@@ -369,7 +409,45 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         )
     }
 
-    fun play(track: Track) {
+    fun playMusicQueue(tracks: List<Track>, requestedIndex: Int = 0) {
+        val requestedTrack = tracks.getOrNull(requestedIndex) ?: return
+        if (!requestedTrack.isDirectPlaybackAllowed()) {
+            context.openUrl(requestedTrack.sourceUrl)
+            return
+        }
+        val playableTracks = tracks.filter(Track::isDirectPlaybackAllowed)
+        val startIndex = playableTracks.indexOf(requestedTrack)
+        if (playableTracks.isEmpty() || startIndex < 0) return
+        val activePlayer = player
+        if (activePlayer == null) {
+            playerError = "The player is still starting. Try again in a moment."
+            return
+        }
+        savePodcastProgress()
+        currentTrack = requestedTrack
+        currentStation = null
+        currentPodcast = null
+        showMusicPlayer = tracks.size > 1
+        showRadioPlayer = false
+        showPodcastPlayer = false
+        playerError = null
+        positionMs = 0L
+        durationMs = (requestedTrack.durationSeconds * 1_000L).coerceAtLeast(1L)
+        try {
+            activePlayer.setMediaItems(playableTracks.map(Track::toMediaItem), startIndex, 0L)
+            activePlayer.setPlaybackSpeed(1f)
+            activePlayer.prepare()
+            activePlayer.play()
+        } catch (_: RuntimeException) {
+            activePlayer.stop()
+            activePlayer.clearMediaItems()
+            playerError = "This track cannot be played on this device."
+        }
+    }
+
+    fun play(track: Track) = playMusicQueue(listOf(track))
+
+    fun enqueueMusicTrack(track: Track, playNext: Boolean) {
         if (!track.isDirectPlaybackAllowed()) {
             context.openUrl(track.sourceUrl)
             return
@@ -379,24 +457,53 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
             playerError = "The player is still starting. Try again in a moment."
             return
         }
-        savePodcastProgress()
-        currentTrack = track
-        currentStation = null
-        currentPodcast = null
-        showRadioPlayer = false
-        showPodcastPlayer = false
-        playerError = null
-        positionMs = 0L
-        durationMs = (track.durationSeconds * 1_000L).coerceAtLeast(1L)
-        try {
-            activePlayer.setMediaItem(track.toMediaItem())
-            activePlayer.setPlaybackSpeed(1f)
-            activePlayer.prepare()
-            activePlayer.play()
-        } catch (_: RuntimeException) {
-            activePlayer.stop()
-            activePlayer.clearMediaItems()
-            playerError = "This track cannot be played on this device."
+        if (currentTrack == null || musicQueue.isEmpty()) {
+            play(track)
+            return
+        }
+        val insertIndex = if (playNext) activePlayer.currentMediaItemIndex + 1 else activePlayer.mediaItemCount
+        activePlayer.addMediaItem(insertIndex.coerceIn(0, activePlayer.mediaItemCount), track.toMediaItem())
+    }
+
+    fun jumpToMusic(index: Int) {
+        val activePlayer = player ?: return
+        if (index !in 0 until activePlayer.mediaItemCount || musicQueue.isEmpty()) return
+        activePlayer.seekToDefaultPosition(index)
+        activePlayer.play()
+    }
+
+    fun moveMusicQueueItem(fromIndex: Int, toIndex: Int) {
+        val activePlayer = player ?: return
+        if (fromIndex !in 0 until activePlayer.mediaItemCount || toIndex !in 0 until activePlayer.mediaItemCount) return
+        activePlayer.moveMediaItem(fromIndex, toIndex)
+    }
+
+    fun removeMusicQueueItem(index: Int) {
+        val activePlayer = player ?: return
+        if (index !in 0 until activePlayer.mediaItemCount || musicQueue.isEmpty()) return
+        activePlayer.removeMediaItem(index)
+        if (activePlayer.mediaItemCount == 0) showMusicPlayer = false
+    }
+
+    fun clearMusicQueue() {
+        val activePlayer = player ?: return
+        activePlayer.stop()
+        activePlayer.clearMediaItems()
+        showMusicPlayer = false
+    }
+
+    fun toggleShuffle() {
+        val activePlayer = player ?: return
+        if (musicQueue.size < 2) return
+        activePlayer.shuffleModeEnabled = !activePlayer.shuffleModeEnabled
+    }
+
+    fun cycleRepeatMode() {
+        val activePlayer = player ?: return
+        activePlayer.repeatMode = when (activePlayer.repeatMode) {
+            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+            else -> Player.REPEAT_MODE_OFF
         }
     }
 
@@ -411,6 +518,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         currentTrack = null
         currentStation = station
         currentPodcast = null
+        showMusicPlayer = false
         showPodcastPlayer = false
         playerError = null
         radioQueue = when {
@@ -445,6 +553,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         currentTrack = null
         currentStation = null
         currentPodcast = episode
+        showMusicPlayer = false
         showRadioPlayer = false
         showPodcastPlayer = true
         playerError = null
@@ -473,6 +582,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         currentTrack = null
         currentStation = null
         currentPodcast = null
+        showMusicPlayer = false
         showRadioPlayer = false
         showPodcastPlayer = false
         playerError = null
@@ -558,6 +668,9 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         playStation(queue[nextIndex])
     }
 
+    BackHandler(enabled = showMusicPlayer) {
+        showMusicPlayer = false
+    }
     BackHandler(enabled = showRadioPlayer) {
         showRadioPlayer = false
     }
@@ -575,13 +688,17 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         bottomBar = {
             Column {
                 currentTrack?.let { track ->
-                    MiniPlayer(
+                    MusicMiniPlayer(
                         track = track,
                         isPlaying = isPlaying,
                         isBuffering = isBuffering,
                         positionMs = positionMs,
                         durationMs = durationMs,
+                        queueSize = musicQueue.size,
+                        onOpen = { showMusicPlayer = true },
                         onSeek = { player?.seekTo(it) },
+                        onPrevious = { player?.seekToPreviousMediaItem() },
+                        onNext = { player?.seekToNextMediaItem() },
                         onToggle = ::togglePlayback,
                     )
                 }
@@ -670,6 +787,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                     onSearch = { viewModel.search() },
                     onPlay = ::play,
                     onAdd = { addTrack = it },
+                    onQueue = { queueTrack = it },
                     onOpen = context::openUrl,
                 )
                 AppSection.RADIO -> RadioBrowseScreen(
@@ -718,7 +836,9 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                 AppSection.LIBRARY -> LibraryScreen(
                     playlists = playlists,
                     onCreate = { showCreatePlaylist = true },
-                    onPlay = ::play,
+                    onPlay = { tracks, index -> playMusicQueue(tracks, index) },
+                    onPlayAll = { tracks -> playMusicQueue(tracks) },
+                    onQueue = { queueTrack = it },
                     onRemove = viewModel::removeFromPlaylist,
                     onOpen = context::openUrl,
                 )
@@ -740,6 +860,31 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
               onNext = { switchStation(1) },
               onToggleSaved = { viewModel.toggleSavedStation(station) },
               onHomepage = { context.openUrl(station.homepageUrl) },
+          )
+      }
+      currentTrack?.takeIf { showMusicPlayer }?.let { track ->
+          MusicPlayerScreen(
+              track = track,
+              queue = musicQueue,
+              currentIndex = musicQueueIndex,
+              isPlaying = isPlaying,
+              isBuffering = isBuffering,
+              positionMs = positionMs,
+              durationMs = durationMs,
+              shuffleEnabled = shuffleEnabled,
+              repeatMode = repeatMode,
+              error = playerError,
+              onBack = { showMusicPlayer = false },
+              onToggle = ::togglePlayback,
+              onSeek = { player?.seekTo(it) },
+              onPrevious = { player?.seekToPreviousMediaItem() },
+              onNext = { player?.seekToNextMediaItem() },
+              onShuffle = ::toggleShuffle,
+              onRepeat = ::cycleRepeatMode,
+              onJumpTo = ::jumpToMusic,
+              onMove = ::moveMusicQueueItem,
+              onRemove = ::removeMusicQueueItem,
+              onClear = ::clearMusicQueue,
           )
       }
       currentPodcast?.takeIf { showPodcastPlayer }?.let { episode ->
@@ -791,6 +936,21 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
             onDismiss = { addTrack = null },
         )
     }
+    queueTrack?.let { track ->
+        AddToQueueDialog(
+            track = track,
+            hasMusicQueue = musicQueue.isNotEmpty(),
+            onPlayNext = {
+                queueTrack = null
+                enqueueMusicTrack(track, playNext = true)
+            },
+            onAddToEnd = {
+                queueTrack = null
+                enqueueMusicTrack(track, playNext = false)
+            },
+            onDismiss = { queueTrack = null },
+        )
+    }
     if (showCreatePlaylist) {
         CreatePlaylistDialog(
             onCreate = { name ->
@@ -814,6 +974,7 @@ private fun DiscoverScreen(
     onSearch: () -> Unit,
     onPlay: (Track) -> Unit,
     onAdd: (Track) -> Unit,
+    onQueue: (Track) -> Unit,
     onOpen: (String) -> Unit,
 ) {
     LazyColumn(
@@ -862,7 +1023,7 @@ private fun DiscoverScreen(
             }
         }
         items(tracks, key = { it.id }) { track ->
-            TrackCard(track, onPlay, onAdd, onOpen)
+            TrackCard(track, onPlay, onAdd, onQueue, onOpen)
         }
         item { Spacer(Modifier.height(12.dp)) }
     }
@@ -973,6 +1134,7 @@ private fun TrackCard(
     track: Track,
     onPlay: (Track) -> Unit,
     onAdd: (Track) -> Unit,
+    onQueue: (Track) -> Unit,
     onOpen: (String) -> Unit,
 ) {
     Card(
@@ -1026,6 +1188,9 @@ private fun TrackCard(
             IconButton(onClick = { onAdd(track) }) {
                 Icon(Icons.Rounded.Add, contentDescription = "Add to playlist")
             }
+            IconButton(onClick = { onQueue(track) }, enabled = track.isDirectPlaybackAllowed()) {
+                Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = "Add to music queue")
+            }
             FilledIconButton(onClick = { onPlay(track) }) {
                 Icon(Icons.Rounded.PlayArrow, contentDescription = "Play")
             }
@@ -1037,7 +1202,9 @@ private fun TrackCard(
 private fun LibraryScreen(
     playlists: Map<String, List<Track>>,
     onCreate: () -> Unit,
-    onPlay: (Track) -> Unit,
+    onPlay: (List<Track>, Int) -> Unit,
+    onPlayAll: (List<Track>) -> Unit,
+    onQueue: (Track) -> Unit,
     onRemove: (String, String) -> Unit,
     onOpen: (String) -> Unit,
 ) {
@@ -1073,9 +1240,16 @@ private fun LibraryScreen(
         }
         playlists.forEach { (name, tracks) ->
             item(key = "header:$name") {
-                Column {
-                    Text(name, fontSize = 21.sp, fontWeight = FontWeight.Bold)
-                    Text("${tracks.size} ${if (tracks.size == 1) "track" else "tracks"}", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(name, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                        Text("${tracks.size} ${if (tracks.size == 1) "track" else "tracks"}", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
+                    }
+                    Button(onClick = { onPlayAll(tracks) }, enabled = tracks.any(Track::isDirectPlaybackAllowed)) {
+                        Icon(Icons.Rounded.PlayArrow, contentDescription = null)
+                        Spacer(Modifier.width(5.dp))
+                        Text("Play all")
+                    }
                 }
             }
             if (tracks.isEmpty()) {
@@ -1084,9 +1258,11 @@ private fun LibraryScreen(
                 }
             }
             items(tracks, key = { "$name:${it.id}" }) { track ->
+                val index = tracks.indexOf(track)
                 PlaylistTrackRow(
                     track = track,
-                    onPlay = { onPlay(track) },
+                    onPlay = { onPlay(tracks, index) },
+                    onQueue = { onQueue(track) },
                     onRemove = { onRemove(name, track.id) },
                     onOpen = { onOpen(track.sourceUrl) },
                 )
@@ -1097,7 +1273,13 @@ private fun LibraryScreen(
 }
 
 @Composable
-private fun PlaylistTrackRow(track: Track, onPlay: () -> Unit, onRemove: () -> Unit, onOpen: () -> Unit) {
+private fun PlaylistTrackRow(
+    track: Track,
+    onPlay: () -> Unit,
+    onQueue: () -> Unit,
+    onRemove: () -> Unit,
+    onOpen: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).clickable(onClick = onPlay).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1113,53 +1295,11 @@ private fun PlaylistTrackRow(track: Track, onPlay: () -> Unit, onRemove: () -> U
             Text(track.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(track.artist, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f))
         }
+        IconButton(onClick = onQueue, enabled = track.isDirectPlaybackAllowed()) {
+            Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = "Add to music queue")
+        }
         IconButton(onClick = onOpen) { Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = "Open source") }
         IconButton(onClick = onRemove) { Icon(Icons.Rounded.Delete, contentDescription = "Remove") }
-    }
-}
-
-@Composable
-private fun MiniPlayer(
-    track: Track,
-    isPlaying: Boolean,
-    isBuffering: Boolean,
-    positionMs: Long,
-    durationMs: Long,
-    onSeek: (Long) -> Unit,
-    onToggle: () -> Unit,
-) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 8.dp) {
-        Column {
-            Slider(
-                value = positionMs.coerceAtMost(durationMs).toFloat(),
-                onValueChange = { onSeek(it.toLong()) },
-                valueRange = 0f..durationMs.coerceAtLeast(1L).toFloat(),
-                modifier = Modifier.fillMaxWidth().height(20.dp),
-            )
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AsyncImage(
-                    model = track.artworkUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)),
-                )
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(track.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(track.artist, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                FilledIconButton(onClick = onToggle) {
-                    if (isBuffering) {
-                        CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
-                    } else {
-                        Icon(if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = "Play or pause")
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -1190,6 +1330,40 @@ private fun AddToPlaylistDialog(
         },
         confirmButton = { TextButton(onClick = onCreate) { Text("New playlist") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun AddToQueueDialog(
+    track: Track,
+    hasMusicQueue: Boolean,
+    onPlayNext: () -> Unit,
+    onAddToEnd: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (hasMusicQueue) "Queue “${track.title}”" else "Play “${track.title}”") },
+        text = {
+            Text(
+                if (hasMusicQueue) {
+                    "Choose where this licensed track should be added."
+                } else {
+                    "This will start a new music queue."
+                },
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onPlayNext) {
+                Text(if (hasMusicQueue) "Play next" else "Play now")
+            }
+        },
+        dismissButton = {
+            Row {
+                if (hasMusicQueue) TextButton(onClick = onAddToEnd) { Text("Add to end") }
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+        },
     )
 }
 

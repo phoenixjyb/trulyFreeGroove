@@ -9,6 +9,7 @@ Every product feature has one shared behavior contract and two platform acceptan
 | Official YouTube search and watch | Canonical video reference, embeddable-only policy, visible-player boundary | Data API v3 adapter, saved references and official IFrame player built; API key and device acceptance open | External handoff only | Add the `WKWebView` adapter, then verify real searches, visible playback, lifecycle pause, links, ads and restrictions on both phones |
 | Licensed music playback | HTTPS stream plus public license evidence | Media3 service and seek controls | AVPlayer, seek and system commands built on iOS Simulator | Physical background, interruption and system-control checks on both phones |
 | Local playlists | Track identity and provider/license metadata | Room persistence | Local Codable persistence built and unit-tested on iOS Simulator | Persistence/lifecycle checks on both physical phones |
+| Music queue and playlist playback | Play-all ordering, current item, position, shuffle and repeat semantics | Android Media3 queue, Play next/end, automatic advance, reorder/remove, shuffle/repeat and service-owned restoration built and unit-tested | Single-track playback only; intentionally deferred for the Android-first milestone | Physical Android playback/lifecycle acceptance, then implement the same contract on iOS |
 | Internet radio discovery | Station validity and browse vocabulary | Implemented | Built and unit-tested on iOS Simulator | Physical iPhone search and browsing |
 | Radio playback | Public HTTP(S) stream boundary | Media3 service | AVPlayer and system commands built on iOS Simulator | Physical iPhone background, controls and HLS |
 | Saved and recent stations | Station identity and 20-item recent cap | Room | Local Codable stores built and unit-tested on iOS Simulator | Physical persistence and lifecycle review on both phones |
@@ -35,7 +36,15 @@ Every product feature has one shared behavior contract and two platform acceptan
 - Saved video metadata is local-only and is refreshed or deleted after 30 days through the official API.
 - Android unit tests, lint and debug APK assembly pass locally: 33 tests, zero failures.
 - No credential is committed. A key-enabled APK was installed in place on the physical Samsung SM-S9280, the Room 1-to-2 database opened, and a live search returned embeddable results.
-- No emulator was used. The official player rendered its thumbnail, branding and controls, and the background/foreground cycle removed and reloaded it without a fatal exception. YouTube then required "Sign in to confirm that you're not a bot". A browser-backed Custom Tab fallback is built to share the browser's signed-in session and provide an integrated return control, but the phone disconnected before that fallback could be installed and physically accepted. Audiovisual playback and full-screen behavior remain open device gates.
+- No emulator was used. The official player rendered its thumbnail, branding and controls, and the background/foreground cycle removed and reloaded it without a fatal exception. YouTube then required "Sign in to confirm that you're not a bot". The browser-backed Custom Tab fallback was installed and an official YouTube URL opened in an Edge Custom Tab with integrated browser controls. Human acceptance of the signed-in close/back flow, audiovisual playback and full-screen behavior remains open.
+
+## Android music queue implementation evidence (2026-09-02)
+
+- A playlist can start one Media3 timeline at any playable track or through a dedicated Play all action; automatic advancement and notification/lock-screen next/previous commands stay owned by `PlaybackService`.
+- Licensed discovery and playlist tracks can be inserted next or at the end. The full music player can jump, reorder, remove or clear queued tracks and cycle shuffle, repeat-all and repeat-one.
+- The service checkpoints the active music queue, current item, position, shuffle and repeat state. Restoration revalidates every track against the existing direct-playback policy and fails closed instead of restoring external-only or unlicensed media.
+- Focused JVM tests cover queue round-trip, position/mode retention, authorization filtering and malformed state. Physical Android playback, automatic advance, queue edits, process relaunch and system controls remain open acceptance gates.
+- This milestone is intentionally Android-first at the user's direction. iOS queue parity remains required before the capability is complete under this ledger.
 
 ## Current iOS build evidence
 
