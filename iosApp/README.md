@@ -40,6 +40,6 @@ swiftc OpenGroove/Models/RadioStation.swift OpenGroove/Services/RadioDirectory.s
 /tmp/opengroove-radio-smoke
 ```
 
-The native iOS counterpart now implements the same product use cases as Android: license-explicit Wikimedia Commons discovery, optional Jamendo discovery, five official-platform handoffs, local playlists, internet-radio discovery/saved/recent lists, publisher-feed podcasts, subscriptions and Unplayed inbox, and dedicated AVPlayer experiences for music, radio and podcasts. The shared Kotlin framework remains the fail-closed playback-policy authority.
+The native iOS counterpart now implements the same non-YouTube product use cases as Android: license-explicit Wikimedia Commons discovery, optional Jamendo discovery, official-platform handoffs, local playlists and a persistent editable music queue, Chinese/region/language radio discovery with saved/recent lists, publisher-feed podcasts, subscriptions and Unplayed inbox, and dedicated AVPlayer experiences for music, radio and podcasts. The shared Kotlin framework remains the fail-closed playback-policy authority.
 
 Simulator builds and unit tests do not replace acceptance on a physical iPhone. Streaming, background playback, Control Center/lock-screen commands, interruptions, timers, refresh scheduling and persistence still need to be exercised on the target phone.
