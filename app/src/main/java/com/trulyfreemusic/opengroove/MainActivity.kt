@@ -67,7 +67,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.Text as MaterialText
+import com.trulyfreemusic.opengroove.localization.LocalizedText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -110,6 +111,8 @@ import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import com.trulyfreemusic.opengroove.model.Track
 import com.trulyfreemusic.opengroove.data.SearchLanguage
+import com.trulyfreemusic.opengroove.localization.UiLanguagePreferences
+import com.trulyfreemusic.opengroove.localization.UiLanguageSelector
 import com.trulyfreemusic.opengroove.playback.PlaybackCommands
 import com.trulyfreemusic.opengroove.playback.PlaybackService
 import com.trulyfreemusic.opengroove.playback.MusicMiniPlayer
@@ -134,6 +137,10 @@ import com.trulyfreemusic.opengroove.youtube.YouTubeWatchScreen
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(UiLanguagePreferences.localizedContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { OpenGrooveTheme { OpenGrooveApp() } }
@@ -200,6 +207,7 @@ private enum class AppSection { DISCOVER, YOUTUBE, RADIO, PODCASTS, LIBRARY }
 @Composable
 private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
     val context = LocalContext.current
+    val uiLanguage = UiLanguagePreferences.current(context)
     val searchState by viewModel.searchState.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val radioState by viewModel.radioState.collectAsStateWithLifecycle()
@@ -724,6 +732,14 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                         onToggle = ::togglePlayback,
                     )
                 }
+                UiLanguageSelector(
+                    selected = uiLanguage,
+                    onSelected = { language ->
+                        if (language != uiLanguage) {
+                            (context as? MainActivity)?.let { UiLanguagePreferences.apply(it, language) }
+                        }
+                    },
+                )
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     NavigationBarItem(
                         selected = section == AppSection.DISCOVER,
@@ -1110,7 +1126,7 @@ private fun ProviderButton(label: String, onClick: () -> Unit) {
         onClick = onClick,
         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
     ) {
-        Text(label, maxLines = 1, fontSize = 11.sp)
+        MaterialText(label, maxLines = 1, fontSize = 11.sp)
         Spacer(Modifier.width(3.dp))
         Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null, Modifier.size(13.dp))
     }
@@ -1152,8 +1168,8 @@ private fun TrackCard(
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(track.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
+                MaterialText(track.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                MaterialText(
                     track.artist,
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
@@ -1163,7 +1179,7 @@ private fun TrackCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(13.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text(
+                    MaterialText(
                         listOf(track.providerName, formatDuration(track.durationSeconds))
                             .filter(String::isNotBlank)
                             .joinToString(" • "),
@@ -1244,7 +1260,7 @@ private fun LibraryScreen(
             item(key = "header:$name") {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(name, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                        MaterialText(name, fontSize = 21.sp, fontWeight = FontWeight.Bold)
                         Text("${tracks.size} ${if (tracks.size == 1) "track" else "tracks"}", fontSize = 12.sp, color = MaterialTheme.colorScheme.secondary)
                     }
                     Button(onClick = { onPlayAll(tracks) }, enabled = tracks.any(Track::isDirectPlaybackAllowed)) {
@@ -1294,8 +1310,8 @@ private fun PlaylistTrackRow(
         )
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text(track.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(track.artist, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f))
+            MaterialText(track.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            MaterialText(track.artist, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f))
         }
         IconButton(onClick = onQueue, enabled = track.isDirectPlaybackAllowed()) {
             Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = "Add to music queue")
@@ -1325,7 +1341,7 @@ private fun AddToPlaylistDialog(
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
                     ) {
-                        Text(name, Modifier.padding(14.dp), fontWeight = FontWeight.SemiBold)
+                        MaterialText(name, Modifier.padding(14.dp), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

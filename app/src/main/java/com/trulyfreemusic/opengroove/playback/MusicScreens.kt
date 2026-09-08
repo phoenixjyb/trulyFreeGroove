@@ -39,7 +39,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.Text as MaterialText
+import com.trulyfreemusic.opengroove.localization.LocalizedText as Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,8 +92,8 @@ fun MusicMiniPlayer(
                 )
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(track.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
+                    MaterialText(track.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    MaterialText(
                         if (queueSize > 1) "${track.artist} • $queueSize in queue" else track.artist,
                         fontSize = 12.sp,
                         maxLines = 1,
@@ -167,10 +168,10 @@ fun MusicPlayerScreen(
                         modifier = Modifier.size(230.dp).clip(RoundedCornerShape(28.dp)),
                     )
                     Spacer(Modifier.height(16.dp))
-                    Text(track.title, fontSize = 25.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Text(track.artist, color = MaterialTheme.colorScheme.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    MaterialText(track.title, fontSize = 25.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    MaterialText(track.artist, color = MaterialTheme.colorScheme.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (track.album.isNotBlank()) {
-                        Text(track.album, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                        MaterialText(track.album, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                     }
                     Spacer(Modifier.height(12.dp))
                     Slider(
@@ -258,8 +259,8 @@ fun MusicPlayerScreen(
                         )
                         Spacer(Modifier.width(9.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(queued.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(queued.artist, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                            MaterialText(queued.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            MaterialText(queued.artist, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                         }
                         Column {
                             IconButton(onClick = { onMove(index, index - 1) }, enabled = index > 0, modifier = Modifier.size(30.dp)) {

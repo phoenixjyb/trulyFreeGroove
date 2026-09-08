@@ -54,7 +54,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.Text as MaterialText
+import com.trulyfreemusic.opengroove.localization.LocalizedText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -174,7 +175,7 @@ fun RadioBrowseScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     BrowseButton(
-                        label = "Country",
+                        label = "Country or region",
                         selected = browsePanel == RadioBrowseMode.COUNTRY,
                         icon = Icons.Rounded.Language,
                     ) { browsePanel = RadioBrowseMode.COUNTRY }
@@ -375,12 +376,16 @@ private fun CountryBrowser(
                 FilterChip(
                     selected = selected?.code == country.code,
                     onClick = { onSelect(country) },
-                    label = { Text("${countryFlag(country.code)} ${country.displayName}") },
+                    label = { MaterialText("${countryFlag(country.code)} ${country.displayName}") },
                 )
             }
         }
         OutlinedButton(onClick = onShowAll, enabled = countries.isNotEmpty()) {
-            Text(if (selected == null) "All countries" else "${countryFlag(selected.code)} ${selected.displayName}")
+            if (selected == null) {
+                Text("All countries")
+            } else {
+                MaterialText("${countryFlag(selected.code)} ${selected.displayName}")
+            }
         }
     }
 }
@@ -448,15 +453,15 @@ private fun StationCard(
             StationArtwork(station, 62)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
+                MaterialText(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                MaterialText(
                     listOf(station.countryDisplayName, station.language).filter(String::isNotBlank).joinToString(" • "),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
+                MaterialText(
                     stationTechnicalLine(station),
                     color = MaterialTheme.colorScheme.secondary,
                     fontSize = 11.sp,
@@ -570,7 +575,7 @@ fun RadioPlayerScreen(
                 StationArtwork(station, 230)
             }
             Spacer(Modifier.height(34.dp))
-            Text(
+            MaterialText(
                 station.name,
                 fontSize = 30.sp,
                 lineHeight = 34.sp,
@@ -580,13 +585,13 @@ fun RadioPlayerScreen(
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(8.dp))
-            Text(
+            MaterialText(
                 listOf(countryFlag(station.countryCode), station.countryDisplayName, station.language)
                     .filter(String::isNotBlank).joinToString("  "),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
             )
-            Text(stationTechnicalLine(station), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
+            MaterialText(stationTechnicalLine(station), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
             error?.let {
                 Spacer(Modifier.height(12.dp))
                 Text(it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
@@ -647,7 +652,7 @@ fun RadioMiniPlayer(
             StationArtwork(station, 44)
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
-                Text(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                MaterialText(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     "${if (isBuffering) "CONNECTING" else "STREAM"} • ${station.countryDisplayName}",
                     fontSize = 11.sp,
@@ -717,10 +722,10 @@ private fun CountryDialog(countries: List<RadioCountry>, onSelect: (RadioCountry
                             Modifier.fillMaxWidth().clickable { onSelect(country) }.padding(vertical = 11.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(countryFlag(country.code), fontSize = 22.sp)
+                            MaterialText(countryFlag(country.code), fontSize = 22.sp)
                             Spacer(Modifier.width(10.dp))
-                            Text(country.displayName, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(country.stationCount.toString(), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
+                            MaterialText(country.displayName, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            MaterialText(country.stationCount.toString(), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
                         }
                     }
                 }

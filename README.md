@@ -24,6 +24,7 @@ This repository now contains the existing Android app, a native SwiftUI iOS coun
 - Continue playback in the background with Android media controls, lock-screen metadata, audio-focus handling, and safe headphone-disconnect behavior.
 - See whether Radio Browser considered a station online and when it last checked the stream; this does not claim the programme itself is live.
 - Follow the phone's light or dark appearance throughout the app.
+- On Android, switch the app interface between EN, 简中, and 繁中. The choice persists independently from music, podcast, and radio content-language filters; a fresh install follows the phone language.
 - Search for podcasts through Apple's public catalog using English, mainland-Chinese, or Hong Kong storefront scopes; Apple supplies discovery metadata, not episode audio.
 - Add a publisher RSS/Atom feed directly, browse its episodes, subscribe locally, stream from publisher enclosure URLs, and resume from the saved listening position.
 - Open a dedicated podcast player, build an episode queue, jump between or remove queued episodes, choose 0.75×–2× playback speed, and set a service-owned 15–60 minute sleep timer.

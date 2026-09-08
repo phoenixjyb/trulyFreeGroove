@@ -62,6 +62,11 @@ android {
     }
     kotlinOptions.jvmTarget = "17"
     packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
     lint {
         // Dependency versions are pinned to the current AGP 8.5 toolchain. In particular,
         // WorkManager 2.11 requires AGP 8.6+, which is outside this feature release.

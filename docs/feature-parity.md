@@ -21,6 +21,7 @@ The current parity milestone intentionally excludes Android's optional YouTube s
 | Podcast playback | Public publisher enclosure policy, queue, 0.75×–2× speed and 15–60 minute timer | Media3 service | AVPlayer queue, resume, automatic advance, speed, sleep timer and system commands built on iOS Simulator | Physical background audio, controls, timer and interruption checks on both phones |
 | Podcast metadata refresh | Metadata-only, approximately 12-hour cadence | WorkManager periodic job | BGAppRefreshTask request; opportunistic system scheduling | Observe refresh on physical Android and iPhone under normal power/network conditions |
 | Theme | Product design tokens | System light/dark | System light/dark; simulator shell visually checked | Physical light/dark comparison |
+| UI language | Interface locale is independent from catalog/content-language filters | Persistent EN, 简中 and 繁中 selector; fresh installs follow the device locale | English only; intentionally deferred for the Android-first milestone | Physical Android switch/relaunch check, then implement and verify iOS parity |
 
 ## Android reliability hardening evidence (2026-08-28)
 
@@ -58,6 +59,14 @@ The current parity milestone intentionally excludes Android's optional YouTube s
 - Android and shared JVM tests cover combined country/language parameters, Chinese metadata preservation, the 台湾省 label/code boundary and the Hong Kong Cantonese preset.
 - iOS commit `83e518c` uses the same four presets and directory values. Swift tests cover combined country/language query normalization plus the 台湾省 and Hong Kong Cantonese boundaries; a live iPhone 15 Simulator run displayed the shortcuts and returned Hong Kong Cantonese directory results.
 - Those live results prove directory discovery only. Physical search, audio playback, save/recent persistence and lifecycle acceptance remain open on both platforms.
+
+## Android interface localization evidence (2026-09-08)
+
+- A compact global selector exposes EN, 简中 and 繁中 without changing the selected music, podcast, YouTube or radio content filters.
+- The selected interface locale is persisted, drives Android's per-app locale on Android 13 and newer, and recreates the activity safely on older supported versions. With no prior choice, the interface follows the device language and uses Traditional Chinese for Hong Kong, Macao, Taiwan or Hant locales.
+- Navigation, discovery, library, radio, podcast, YouTube, playback controls and known application-generated errors have localized Android copy. Provider titles, artist names, station names, podcast metadata, video metadata and user playlist names remain provider/user content rather than translated labels.
+- Focused JVM tests cover locale selection, both Chinese scripts, dynamic labels, error copy and the distinct meanings of country/region browsing versus Country music. Physical Android light/dark switching, language switching, relaunch persistence and screen-by-screen copy review remain open acceptance gates; iOS localization is intentionally deferred.
+- The full local Android gate passes with 31 app tests and 16 shared tests, zero lint findings, and a successfully assembled debug APK. No emulator was used.
 
 ## Current iOS build evidence
 
