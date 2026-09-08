@@ -4,6 +4,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.json.JSONArray
 import java.time.Instant
 
 class RadioStationTest {
@@ -49,5 +50,44 @@ class RadioStationTest {
 
     @Test fun missingCheckTimeStillReportsEvidenceScope() {
         assertEquals("Offline when checked", stationAvailabilityLine(station().copy(isOnline = false)))
+    }
+
+    @Test fun chineseDirectoryFiltersCanCombineCountryAndLanguage() {
+        val parameters = radioSearchParameters(
+            name = " 香港電台 ",
+            countryCode = "hk",
+            tag = null,
+            language = "Cantonese",
+            offset = -4,
+        )
+
+        assertEquals("香港電台", parameters["name"])
+        assertEquals("HK", parameters["countrycode"])
+        assertEquals("cantonese", parameters["language"])
+        assertEquals("0", parameters["offset"])
+        assertEquals("true", parameters["hidebroken"])
+    }
+
+    @Test fun chineseStationMetadataIsPreservedFromTheDirectory() {
+        val payload = JSONArray(
+            """[{
+              "stationuuid":"hk-1",
+              "name":"香港電台第一台",
+              "url_resolved":"https://radio.example/hk.mp3",
+              "country":"Hong Kong",
+              "countrycode":"HK",
+              "language":"cantonese,china",
+              "tags":"news,talk",
+              "codec":"MP3",
+              "lastcheckok":1
+            }]""",
+        )
+
+        val parsed = RadioBrowserCatalog().parseStations(payload).single()
+
+        assertEquals("香港電台第一台", parsed.name)
+        assertEquals("HK", parsed.countryCode)
+        assertEquals("cantonese,china", parsed.language)
+        assertTrue(parsed.isOnline)
     }
 }

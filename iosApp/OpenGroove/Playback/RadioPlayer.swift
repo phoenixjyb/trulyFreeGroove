@@ -136,7 +136,7 @@ final class RadioPlayer: ObservableObject {
         guard isActive, let station = currentStation else { return }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = [
             MPMediaItemPropertyTitle: station.name,
-            MPMediaItemPropertyArtist: [station.country, station.language].filter { !$0.isEmpty }.joined(separator: " • "),
+            MPMediaItemPropertyArtist: [station.countryDisplayName, station.language].filter { !$0.isEmpty }.joined(separator: " • "),
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1 : 0,
         ]
     }

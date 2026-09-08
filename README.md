@@ -15,13 +15,16 @@ This repository now contains the existing Android app, a native SwiftUI iOS coun
 - Fall back to an official browser-backed YouTube tab when YouTube requires account or bot verification; the tab shares the browser's sign-in state and has an integrated return control.
 - Save YouTube video references locally; cached title, channel, thumbnail, and availability metadata is refreshed or removed within 30 days.
 - Create local playlists and add or remove tracks.
+- On Android and iOS, play a whole playlist, add a licensed track next or at the end, reorder or remove queued tracks, and use shuffle, repeat-all, or repeat-one. The active music queue, current item, position and playback modes are restored after the player is recreated.
 - Keep playlists, saved/recent stations, podcast subscriptions, episodes, and playback progress in a Room database. Existing preference-backed playlists and radio data migrate automatically once.
 - Play, pause, and seek within an authorized Jamendo stream.
 - Search internet radio stations by name, browse by country, genre, or category, and filter out stations reported as broken.
+- On Android and iOS, open directory-backed Chinese radio shortcuts for 中国大陆, 香港粤语, 台湾省, or 全球中文, and filter stations by Chinese or Cantonese language metadata. The product label 台湾省 maps to Radio Browser's required `TW` directory code.
 - Save favorite stations locally, revisit recently played stations, and use a dedicated internet-radio player with previous/next station switching.
 - Continue playback in the background with Android media controls, lock-screen metadata, audio-focus handling, and safe headphone-disconnect behavior.
 - See whether Radio Browser considered a station online and when it last checked the stream; this does not claim the programme itself is live.
 - Follow the phone's light or dark appearance throughout the app.
+- On Android and iOS, switch the app interface between EN, 简中, and 繁中. The choice persists independently from music, podcast, and radio content-language filters; a fresh install follows the phone language.
 - Search for podcasts through Apple's public catalog using English, mainland-Chinese, or Hong Kong storefront scopes; Apple supplies discovery metadata, not episode audio.
 - Add a publisher RSS/Atom feed directly, browse its episodes, subscribe locally, stream from publisher enclosure URLs, and resume from the saved listening position.
 - Open a dedicated podcast player, build an episode queue, jump between or remove queued episodes, choose 0.75×–2× playback speed, and set a service-owned 15–60 minute sleep timer.

@@ -55,7 +55,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.Text as MaterialText
+import com.trulyfreemusic.opengroove.localization.LocalizedText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -302,8 +303,8 @@ private fun PodcastShowScreen(
                 )
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(show.title, fontSize = 23.sp, fontWeight = FontWeight.Black)
-                    Text(show.author, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                    MaterialText(show.title, fontSize = 23.sp, fontWeight = FontWeight.Black)
+                    MaterialText(show.author, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
                     Spacer(Modifier.height(8.dp))
                     Button(onClick = onToggleSubscribe) {
                         Icon(if (subscribed) Icons.Rounded.Check else Icons.Rounded.Add, contentDescription = null, Modifier.size(18.dp))
@@ -314,7 +315,7 @@ private fun PodcastShowScreen(
             }
             if (show.description.isNotBlank()) {
                 Spacer(Modifier.height(10.dp))
-                Text(show.description, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 5, overflow = TextOverflow.Ellipsis)
+                MaterialText(show.description, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 5, overflow = TextOverflow.Ellipsis)
             }
             if (show.websiteUrl.isHttpUrl()) {
                 TextButton(onClick = { onOpen(show.websiteUrl) }) {
@@ -429,9 +430,9 @@ private fun PodcastShowCard(show: PodcastShow, subscribed: Boolean, onClick: () 
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(show.title, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(show.author, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(listOf(show.genre, show.country).filter(String::isNotBlank).joinToString(" • "), fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                MaterialText(show.title, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                MaterialText(show.author, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                MaterialText(listOf(show.genre, show.country).filter(String::isNotBlank).joinToString(" • "), fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
             }
             if (subscribed) Icon(Icons.Rounded.Check, contentDescription = "Subscribed", tint = MaterialTheme.colorScheme.tertiary)
         }
@@ -450,7 +451,7 @@ private fun PodcastEpisodeCard(
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(episode.title, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    MaterialText(episode.title, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text(
                         listOf(formatPodcastDate(episode.publishedAt), formatPodcastDurationLabel(episode.durationMs))
                             .filter(String::isNotBlank).joinToString(" • "),
@@ -474,7 +475,7 @@ private fun PodcastEpisodeCard(
             }
             if (episode.description.isNotBlank()) {
                 Spacer(Modifier.height(6.dp))
-                Text(episode.description, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                MaterialText(episode.description, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
             if (episode.positionMs > 0 || episode.completed) {
                 Spacer(Modifier.height(8.dp))
@@ -527,8 +528,8 @@ fun PodcastMiniPlayer(
                 )
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(episode.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(episode.showTitle, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    MaterialText(episode.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    MaterialText(episode.showTitle, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 FilledIconButton(onClick = onToggle) {
                     if (isBuffering) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
@@ -596,8 +597,8 @@ fun PodcastPlayerScreen(
                         modifier = Modifier.size(220.dp).clip(RoundedCornerShape(28.dp)),
                     )
                     Spacer(Modifier.height(16.dp))
-                    Text(episode.title, fontSize = 23.sp, fontWeight = FontWeight.Black, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                    Text(episode.showTitle, color = MaterialTheme.colorScheme.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    MaterialText(episode.title, fontSize = 23.sp, fontWeight = FontWeight.Black, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    MaterialText(episode.showTitle, color = MaterialTheme.colorScheme.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Spacer(Modifier.height(12.dp))
                     Slider(
                         value = positionMs.coerceIn(0L, durationMs.coerceAtLeast(1L)).toFloat(),
@@ -692,8 +693,8 @@ fun PodcastPlayerScreen(
                         }
                         Spacer(Modifier.width(8.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(queued.title, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Text(queued.showTitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                            MaterialText(queued.title, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            MaterialText(queued.showTitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                         }
                         IconButton(onClick = { onRemove(index) }, enabled = index != currentIndex) {
                             Icon(Icons.Rounded.Delete, contentDescription = "Remove from queue")

@@ -12,18 +12,10 @@ class RadioBrowserCatalog {
         name: String = "",
         countryCode: String? = null,
         tag: String? = null,
+        language: String? = null,
         offset: Int = 0,
     ): List<RadioStation> {
-        val parameters = linkedMapOf(
-            "name" to name.trim(),
-            "countrycode" to countryCode.orEmpty(),
-            "tag" to tag.orEmpty().lowercase(),
-            "hidebroken" to "true",
-            "order" to "clickcount",
-            "reverse" to "true",
-            "limit" to PAGE_SIZE.toString(),
-            "offset" to offset.coerceAtLeast(0).toString(),
-        ).filterValues(String::isNotBlank)
+        val parameters = radioSearchParameters(name, countryCode, tag, language, offset)
         return request("/json/stations/search", parameters) { payload ->
             parseStations(JSONArray(payload))
         }
@@ -125,3 +117,21 @@ class RadioBrowserCatalog {
         )
     }
 }
+
+internal fun radioSearchParameters(
+    name: String,
+    countryCode: String?,
+    tag: String?,
+    language: String?,
+    offset: Int,
+): Map<String, String> = linkedMapOf(
+    "name" to name.trim(),
+    "countrycode" to countryCode.orEmpty().uppercase(),
+    "tag" to tag.orEmpty().trim().lowercase(),
+    "language" to language.orEmpty().trim().lowercase(),
+    "hidebroken" to "true",
+    "order" to "clickcount",
+    "reverse" to "true",
+    "limit" to RadioBrowserCatalog.PAGE_SIZE.toString(),
+    "offset" to offset.coerceAtLeast(0).toString(),
+).filterValues(String::isNotBlank)

@@ -132,13 +132,135 @@ func musicPlaylistsPersistAndRejectDuplicateNames() throws {
     #expect(restored.playlists.first?.tracks == [track])
 }
 
-private func musicTestTrack() throws -> MusicTrack {
+@Test
+func musicQueueSnapshotRoundTripRetainsPositionAndModes() throws {
+    let suiteName = "MusicQueueTests.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let store = MusicQueueStore(defaults: defaults)
+    store.save(MusicQueueSnapshot(
+        tracks: [try musicTestTrack(id: "one"), try musicTestTrack(id: "two")],
+        currentIndex: 1,
+        position: 42.5,
+        shuffleEnabled: true,
+        repeatMode: .all
+    ))
+
+    let restored = try #require(store.load())
+    #expect(restored.tracks.map(\.id) == ["one", "two"])
+    #expect(restored.currentIndex == 1)
+    #expect(restored.position == 42.5)
+    #expect(restored.shuffleEnabled)
+    #expect(restored.repeatMode == .all)
+}
+
+@Test
+func musicQueueRestoreFailsClosedAndRemapsCurrentTrack() throws {
+    let external = try musicTestTrack(id: "external", playbackMode: .externalOnly)
+    let allowed = try musicTestTrack(id: "allowed")
+    let restored = try #require(MusicQueueSnapshot(
+        tracks: [external, allowed],
+        currentIndex: 1,
+        position: -5,
+        shuffleEnabled: false,
+        repeatMode: .off
+    ).validated())
+
+    #expect(restored.tracks.map(\.id) == ["allowed"])
+    #expect(restored.currentIndex == 0)
+    #expect(restored.position == 0)
+    #expect(MusicQueueSnapshot(
+        tracks: [external],
+        currentIndex: 0,
+        position: 0,
+        shuffleEnabled: false,
+        repeatMode: .off
+    ).validated() == nil)
+}
+
+@Test
+func musicQueueKeepsDuplicatePositionsAndBoundsSize() throws {
+    let duplicate = try musicTestTrack(id: "same")
+    let oversized = Array(repeating: duplicate, count: MusicQueueSnapshot.maximumTrackCount + 5)
+    let restored = try #require(MusicQueueSnapshot(
+        tracks: oversized,
+        currentIndex: 1,
+        position: 8,
+        shuffleEnabled: false,
+        repeatMode: .one
+    ).validated())
+
+    #expect(restored.tracks.count == MusicQueueSnapshot.maximumTrackCount)
+    #expect(restored.currentIndex == 1)
+}
+
+@MainActor
+@Test
+func musicPlayerEditsTheQueueWithoutLosingTheCurrentTrack() throws {
+    let suiteName = "MusicPlayerQueueTests.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let player = MusicPlayer(queueDefaults: defaults)
+    let one = try musicTestTrack(id: "one")
+    let two = try musicTestTrack(id: "two")
+    let three = try musicTestTrack(id: "three")
+
+    player.play(queue: [one, two], startingAt: 1)
+    player.enqueue(three, playNext: true)
+    #expect(player.queue.map(\.id) == ["one", "two", "three"])
+    #expect(player.currentTrack?.id == "two")
+    player.moveQueueItem(from: 2, to: 0)
+    #expect(player.queue.map(\.id) == ["three", "one", "two"])
+    #expect(player.currentIndex == 2)
+    player.removeQueueItem(at: 2)
+    #expect(player.currentTrack?.id == "one")
+    player.toggleShuffle()
+    player.cycleRepeatMode()
+    #expect(player.shuffleEnabled)
+    #expect(player.repeatMode == .all)
+    player.clearQueue()
+    #expect(player.queue.isEmpty)
+    #expect(!player.isActive)
+}
+
+@MainActor
+@Test
+func musicPlayerRepeatAndShuffleTraversalMatchTheQueueContract() throws {
+    let suiteName = "MusicPlayerTraversalTests.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suiteName))
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let player = MusicPlayer(queueDefaults: defaults)
+    let tracks = try ["one", "two", "three"].map { try musicTestTrack(id: $0) }
+
+    player.play(queue: tracks, startingAt: 2)
+    #expect(!player.skip(offset: 1))
+    player.cycleRepeatMode()
+    #expect(player.repeatMode == .all)
+    #expect(player.skip(offset: 1))
+    #expect(player.currentIndex == 0)
+
+    player.toggleShuffle()
+    let startingIndex = player.currentIndex
+    #expect(player.skip(offset: 1))
+    let secondIndex = player.currentIndex
+    #expect(secondIndex != startingIndex)
+    #expect(player.skip(offset: 1))
+    #expect(![startingIndex, secondIndex].contains(player.currentIndex))
+    #expect(player.skip(offset: -1))
+    #expect(player.currentIndex == secondIndex)
+    player.clearQueue()
+}
+
+private func musicTestTrack(
+    id: String = "commons:1",
+    playbackMode: MusicPlaybackMode = .directAuthorized
+) throws -> MusicTrack {
     MusicTrack(
-        id: "commons:1", title: "Track", artist: "Artist", album: "CC0", duration: 90,
+        id: id, title: "Track \(id)", artist: "Artist", album: "CC0", duration: 90,
         artworkURL: nil, providerName: "Wikimedia Commons",
-        streamURL: try #require(URL(string: "https://upload.wikimedia.org/track.ogg")),
-        sourceURL: try #require(URL(string: "https://commons.wikimedia.org/wiki/File:Track.ogg")),
+        streamURL: try #require(URL(string: "https://upload.wikimedia.org/\(id).ogg")),
+        sourceURL: try #require(URL(string: "https://commons.wikimedia.org/wiki/File:\(id).ogg")),
         licenseURL: try #require(URL(string: "https://creativecommons.org/publicdomain/zero/1.0/")),
-        playbackMode: .directAuthorized
+        playbackMode: playbackMode
     )
 }

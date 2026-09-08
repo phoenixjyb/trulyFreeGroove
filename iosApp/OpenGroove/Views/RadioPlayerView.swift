@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RadioPlayerView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var player: RadioPlayer
     @EnvironmentObject private var saved: SavedStationStore
 
@@ -65,7 +66,7 @@ struct RadioPlayerView: View {
 
                         if let error = player.errorMessage {
                             VStack {
-                                Text(error).font(.caption).foregroundStyle(.red)
+                                Text(localizedUiText(error, locale: locale)).font(.caption).foregroundStyle(.red)
                                 Button("Retry", action: player.retry)
                             }
                         }
@@ -80,7 +81,10 @@ struct RadioPlayerView: View {
                             Button { saved.toggle(station) } label: {
                                 Image(systemName: saved.contains(station) ? "heart.fill" : "heart")
                             }
-                            .accessibilityLabel(saved.contains(station) ? "Remove saved station" : "Save station")
+                            .accessibilityLabel(localizedUiText(
+                                saved.contains(station) ? "Remove saved station" : "Save station",
+                                locale: locale
+                            ))
                         }
                     }
                 }
@@ -107,7 +111,7 @@ struct RadioMiniPlayer: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     VStack(alignment: .leading) {
                         Text(station.name).font(.subheadline.bold()).lineLimit(1)
-                        Text(station.country).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        Text(station.countryDisplayName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

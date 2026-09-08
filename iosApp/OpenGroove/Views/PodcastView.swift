@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PodcastView: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var library: PodcastLibraryStore
     @EnvironmentObject private var podcastPlayer: PodcastPlayer
     @EnvironmentObject private var radioPlayer: RadioPlayer
@@ -15,7 +16,7 @@ struct PodcastView: View {
             Section {
                 Picker("Podcasts", selection: $model.mode) {
                     ForEach(PodcastViewModel.Mode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
+                        Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -30,7 +31,7 @@ struct PodcastView: View {
 
             if let error = model.errorMessage {
                 Section {
-                    Label(error, systemImage: "exclamationmark.triangle")
+                    Label(localizedUiText(error, locale: locale), systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.red)
                 }
             }
@@ -53,7 +54,7 @@ struct PodcastView: View {
         Section("Directory") {
             Picker("Search region", selection: $model.language) {
                 ForEach(PodcastSearchLanguage.allCases) { language in
-                    Text(language.rawValue).tag(language)
+                    Text(LocalizedStringKey(language.rawValue)).tag(language)
                 }
             }
             if model.isLoading {
@@ -134,6 +135,7 @@ struct PodcastView: View {
 }
 
 private struct PodcastShowView: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var library: PodcastLibraryStore
     @EnvironmentObject private var podcastPlayer: PodcastPlayer
     @EnvironmentObject private var radioPlayer: RadioPlayer
@@ -173,8 +175,10 @@ private struct PodcastShowView: View {
                 if !loadedShow.description.isEmpty {
                     Text(loadedShow.description).font(.subheadline).foregroundStyle(.secondary)
                 }
-                Button(library.isSubscribed(loadedShow) ? "Unsubscribe" : "Subscribe") {
+                Button {
                     library.setSubscribed(loadedShow, subscribed: !library.isSubscribed(loadedShow))
+                } label: {
+                    Text(LocalizedStringKey(library.isSubscribed(loadedShow) ? "Unsubscribe" : "Subscribe"))
                 }
                 if let websiteURL = loadedShow.websiteURL {
                     Link("Publisher website", destination: websiteURL)
@@ -186,7 +190,10 @@ private struct PodcastShowView: View {
             } else if visibleEpisodes.isEmpty {
                 Section {
                     ContentUnavailableView(
-                        episodeQuery.isEmpty ? "No playable episodes" : "No matching episodes",
+                        localizedUiText(
+                            episodeQuery.isEmpty ? "No playable episodes" : "No matching episodes",
+                            locale: locale
+                        ),
                         systemImage: episodeQuery.isEmpty ? "waveform.slash" : "magnifyingglass"
                     )
                 }
@@ -212,7 +219,10 @@ private struct PodcastShowView: View {
             }
 
             if let errorMessage {
-                Section { Label(errorMessage, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                Section {
+                    Label(localizedUiText(errorMessage, locale: locale), systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.red)
+                }
             }
         }
         .navigationTitle(loadedShow.title)
@@ -246,6 +256,7 @@ private struct PodcastShowView: View {
 
 private struct AddPodcastFeedView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var library: PodcastLibraryStore
     @State private var feedAddress = ""
     @State private var isLoading = false
@@ -265,14 +276,21 @@ private struct AddPodcastFeedView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 if let errorMessage {
-                    Section { Label(errorMessage, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                    Section {
+                        Label(localizedUiText(errorMessage, locale: locale), systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                    }
                 }
             }
             .navigationTitle("Add Podcast Feed")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: dismiss.callAsFunction) }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(isLoading ? "Adding…" : "Add") { Task { await add() } }
+                    Button {
+                        Task { await add() }
+                    } label: {
+                        Text(LocalizedStringKey(isLoading ? "Adding…" : "Add"))
+                    }
                         .disabled(isLoading || feedAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -316,6 +334,7 @@ private struct PodcastShowRow: View {
 }
 
 struct PodcastEpisodeRow: View {
+    @Environment(\.locale) private var locale
     let episode: PodcastEpisode
     let onPlay: () -> Void
     let onQueue: () -> Void
@@ -341,15 +360,26 @@ struct PodcastEpisodeRow: View {
                         Text(publishedAt, style: .date)
                     }
                     if episode.duration > 0 { Text(episode.duration.podcastTime) }
-                    if episode.position > 0 { Text("\(episode.position.podcastTime) played") }
+                    if episode.position > 0 {
+                        Text(localizedUiFormat(
+                            "%@ played",
+                            locale: locale,
+                            arguments: [episode.position.podcastTime]
+                        ))
+                    }
                 }
                 .font(.caption2).foregroundStyle(.secondary)
             }
 
             Menu {
                 Button("Play next", systemImage: "text.line.first.and.arrowtriangle.forward") { onQueue() }
-                Button(episode.completed ? "Mark unplayed" : "Mark played", systemImage: "checkmark.circle") {
+                Button {
                     onTogglePlayed()
+                } label: {
+                    Label(
+                        localizedUiText(episode.completed ? "Mark unplayed" : "Mark played", locale: locale),
+                        systemImage: "checkmark.circle"
+                    )
                 }
                 if let websiteURL = episode.websiteURL {
                     Link("Publisher episode page", destination: websiteURL)

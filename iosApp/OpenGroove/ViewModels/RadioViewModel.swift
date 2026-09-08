@@ -16,6 +16,8 @@ final class RadioViewModel: ObservableObject {
     @Published private(set) var countries: [RadioCountry] = []
     @Published private(set) var selectedCountry: RadioCountry?
     @Published private(set) var selectedTag: String?
+    @Published private(set) var selectedLanguage: RadioLanguageFilter?
+    @Published private(set) var selectedQuickFilterID: String?
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
 
@@ -35,7 +37,8 @@ final class RadioViewModel: ObservableObject {
             stations = try await directory.search(
                 name: query,
                 countryCode: selectedCountry?.code,
-                tag: selectedTag
+                tag: selectedTag,
+                language: selectedLanguage?.directoryValue
             )
         } catch {
             errorMessage = error.localizedDescription
@@ -46,12 +49,44 @@ final class RadioViewModel: ObservableObject {
     func select(country: RadioCountry?) async {
         selectedCountry = country
         selectedTag = nil
+        selectedLanguage = nil
+        selectedQuickFilterID = nil
         await search()
     }
 
     func select(tag: String?) async {
         selectedCountry = nil
         selectedTag = tag
+        selectedLanguage = nil
+        selectedQuickFilterID = nil
+        await search()
+    }
+
+    func select(language: RadioLanguageFilter?) async {
+        selectedCountry = nil
+        selectedTag = nil
+        selectedLanguage = language
+        selectedQuickFilterID = nil
+        await search()
+    }
+
+    func select(quickFilter: RadioQuickFilter) async {
+        query = ""
+        selectedCountry = quickFilter.countryCode.map { code in
+            countries.first(where: { $0.code.caseInsensitiveCompare(code) == .orderedSame })
+                ?? RadioCountry(name: quickFilter.label, code: code, stationCount: 0)
+        }
+        selectedTag = nil
+        selectedLanguage = quickFilter.language
+        selectedQuickFilterID = quickFilter.id
+        await search()
+    }
+
+    func clearFilters() async {
+        selectedCountry = nil
+        selectedTag = nil
+        selectedLanguage = nil
+        selectedQuickFilterID = nil
         await search()
     }
 

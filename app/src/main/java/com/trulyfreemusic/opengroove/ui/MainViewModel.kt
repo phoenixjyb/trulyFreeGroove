@@ -17,6 +17,8 @@ import com.trulyfreemusic.opengroove.podcast.PodcastUiState
 import com.trulyfreemusic.opengroove.radio.RadioBrowseMode
 import com.trulyfreemusic.opengroove.radio.RadioBrowserCatalog
 import com.trulyfreemusic.opengroove.radio.RadioCountry
+import com.trulyfreemusic.opengroove.radio.RadioLanguageFilter
+import com.trulyfreemusic.opengroove.radio.RadioQuickFilter
 import com.trulyfreemusic.opengroove.radio.RadioStation
 import com.trulyfreemusic.opengroove.radio.RadioUiState
 import com.trulyfreemusic.opengroove.youtube.YouTubeCatalog
@@ -226,7 +228,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         mutableRadioState.value = mutableRadioState.value.copy(
             selectedCountry = country,
             selectedTag = null,
+            selectedLanguage = null,
+            selectedQuickFilterId = null,
             mode = if (country == null) RadioBrowseMode.ALL else RadioBrowseMode.COUNTRY,
+        )
+        loadRadio()
+    }
+
+    fun selectRadioLanguage(language: RadioLanguageFilter?) {
+        mutableRadioState.value = mutableRadioState.value.copy(
+            selectedCountry = null,
+            selectedTag = null,
+            selectedLanguage = language,
+            selectedQuickFilterId = null,
+            mode = if (language == null) RadioBrowseMode.ALL else RadioBrowseMode.LANGUAGE,
+        )
+        loadRadio()
+    }
+
+    fun selectRadioQuickFilter(filter: RadioQuickFilter) {
+        val current = mutableRadioState.value
+        val country = filter.countryCode?.let { code ->
+            current.countries.firstOrNull { it.code.equals(code, ignoreCase = true) }
+                ?: RadioCountry(name = filter.label, code = code, stationCount = 0)
+        }
+        mutableRadioState.value = current.copy(
+            query = "",
+            selectedCountry = country,
+            selectedTag = null,
+            selectedLanguage = filter.language,
+            selectedQuickFilterId = filter.id,
+            mode = if (country == null) RadioBrowseMode.LANGUAGE else RadioBrowseMode.COUNTRY,
         )
         loadRadio()
     }
@@ -236,6 +268,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         mutableRadioState.value = mutableRadioState.value.copy(
             selectedCountry = null,
             selectedTag = tag,
+            selectedLanguage = null,
+            selectedQuickFilterId = null,
             mode = mode,
         )
         loadRadio()
@@ -245,6 +279,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         mutableRadioState.value = mutableRadioState.value.copy(
             selectedCountry = null,
             selectedTag = null,
+            selectedLanguage = null,
+            selectedQuickFilterId = null,
             mode = RadioBrowseMode.ALL,
         )
         loadRadio()
@@ -433,6 +469,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         name = snapshot.query,
                         countryCode = snapshot.selectedCountry?.code,
                         tag = snapshot.selectedTag,
+                        language = snapshot.selectedLanguage?.directoryValue,
                         offset = offset,
                     )
                     countries to stations

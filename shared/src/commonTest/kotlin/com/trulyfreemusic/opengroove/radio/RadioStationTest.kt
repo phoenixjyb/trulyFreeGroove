@@ -1,6 +1,7 @@
 package com.trulyfreemusic.opengroove.radio
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -28,4 +29,25 @@ class RadioStationTest {
 
     @Test
     fun unsupportedSchemesFailClosed() = assertFalse(station("file:///private/audio.mp3").isPlayable())
+
+    @Test
+    fun taiwanUsesTheRequestedProductLabelWithoutChangingItsDirectoryCode() {
+        val country = RadioCountry("Taiwan, Republic Of China", "TW", 120)
+
+        assertEquals("台湾省", country.displayName)
+        assertEquals("TW", country.code)
+        assertEquals("台湾省", ChineseRadioQuickFilters.single { it.countryCode == "TW" }.label)
+        assertEquals(
+            "台湾省",
+            station().copy(country = "Taiwan, Republic Of China", countryCode = "TW").countryDisplayName,
+        )
+    }
+
+    @Test
+    fun hongKongQuickFilterCombinesRegionAndCantoneseLanguage() {
+        val filter = ChineseRadioQuickFilters.single { it.id == "hong-kong-cantonese" }
+
+        assertEquals("HK", filter.countryCode)
+        assertEquals("cantonese", filter.language?.directoryValue)
+    }
 }

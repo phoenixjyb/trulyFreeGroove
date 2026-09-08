@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct RadioView: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var player: RadioPlayer
     @EnvironmentObject private var podcastPlayer: PodcastPlayer
     @EnvironmentObject private var musicPlayer: MusicPlayer
@@ -26,7 +27,7 @@ struct RadioView: View {
             Section {
                 Picker("Stations", selection: $model.mode) {
                     ForEach(RadioViewModel.ListMode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
+                        Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -34,28 +35,73 @@ struct RadioView: View {
             .listRowBackground(Color.clear)
 
             if model.mode == .discover {
+                Section {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 9) {
+                            ForEach(chineseRadioQuickFilters) { filter in
+                                RadioFilterChip(
+                                    title: filter.label,
+                                    selected: model.selectedQuickFilterID == filter.id
+                                ) {
+                                    Task { await model.select(quickFilter: filter) }
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Chinese radio")
+                        Text("中国大陆、香港粤语、台湾省及全球中文电台")
+                            .font(.caption)
+                            .textCase(nil)
+                    }
+                }
+
                 Section("Browse") {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 9) {
-                            BrowseMenu(title: model.selectedCountry?.name ?? "Country", icon: "globe.asia.australia") {
+                            BrowseMenu(title: model.selectedCountry?.displayName ?? "Country", icon: "globe.asia.australia") {
                                 Button("All countries") { Task { await model.select(country: nil) } }
                                 ForEach(model.countries.prefix(80)) { country in
-                                    Button("\(country.name) (\(country.stationCount))") {
+                                    Button("\(country.displayName) (\(country.stationCount))") {
                                         Task { await model.select(country: country) }
+                                    }
+                                }
+                            }
+                            BrowseMenu(title: model.selectedLanguage?.label ?? "Language", icon: "character.bubble") {
+                                Button("All languages") { Task { await model.select(language: nil) } }
+                                ForEach(radioLanguages) { language in
+                                    Button {
+                                        Task { await model.select(language: language) }
+                                    } label: {
+                                        Text(LocalizedStringKey(language.label))
                                     }
                                 }
                             }
                             BrowseMenu(title: model.selectedTag ?? "Genre", icon: "music.quarternote.3") {
                                 Button("All genres") { Task { await model.select(tag: nil) } }
                                 ForEach(genres, id: \.self) { genre in
-                                    Button(genre) { Task { await model.select(tag: genre) } }
+                                    Button {
+                                        Task { await model.select(tag: genre) }
+                                    } label: {
+                                        Text(LocalizedStringKey(genre))
+                                    }
                                 }
                             }
                             BrowseMenu(title: "Category", icon: "square.grid.2x2") {
                                 ForEach(categories, id: \.self) { category in
-                                    Button(category) { Task { await model.select(tag: category) } }
+                                    Button {
+                                        Task { await model.select(tag: category) }
+                                    } label: {
+                                        Text(LocalizedStringKey(category))
+                                    }
                                 }
                             }
+                        }
+                    }
+                    if model.selectedCountry != nil || model.selectedTag != nil || model.selectedLanguage != nil {
+                        Button("Clear filters", systemImage: "xmark.circle") {
+                            Task { await model.clearFilters() }
                         }
                     }
                 }
@@ -73,13 +119,13 @@ struct RadioView: View {
             } else if visibleStations.isEmpty {
                 Section {
                     ContentUnavailableView(
-                        emptyTitle,
+                        localizedUiText(emptyTitle, locale: locale),
                         systemImage: model.mode == .saved ? "heart" : "radio",
-                        description: Text(emptyDescription)
+                        description: Text(localizedUiText(emptyDescription, locale: locale))
                     )
                 }
             } else {
-                Section(listTitle) {
+                Section(localizedListTitle) {
                     ForEach(visibleStations) { station in
                         StationRow(
                             station: station,
@@ -104,7 +150,7 @@ struct RadioView: View {
 
             if model.mode == .discover, let error = model.errorMessage {
                 Section {
-                    Label(error, systemImage: "exclamationmark.triangle")
+                    Label(localizedUiText(error, locale: locale), systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.red)
                 }
             }
@@ -123,10 +169,29 @@ struct RadioView: View {
 
     private var listTitle: String {
         switch model.mode {
-        case .discover: "Working internet streams"
-        case .saved: "Saved stations"
-        case .recent: "Recently played"
+        case .discover:
+            if let selectedID = model.selectedQuickFilterID,
+               let filter = chineseRadioQuickFilters.first(where: { $0.id == selectedID }) {
+                return filter.label
+            }
+            if let country = model.selectedCountry { return country.displayName }
+            if let language = model.selectedLanguage { return language.label }
+            if let tag = model.selectedTag { return tag }
+            return model.query.isEmpty ? "Working internet streams" : "Results for “\(model.query)”"
+        case .saved: return "Saved stations"
+        case .recent: return "Recently played"
         }
+    }
+
+    private var localizedListTitle: String {
+        if model.mode == .discover, !model.query.isEmpty,
+           model.selectedQuickFilterID == nil,
+           model.selectedCountry == nil,
+           model.selectedLanguage == nil,
+           model.selectedTag == nil {
+            return localizedUiFormat("Results for “%@”", locale: locale, arguments: [model.query])
+        }
+        return localizedUiText(listTitle, locale: locale)
     }
 
     private var emptyTitle: String {
@@ -139,14 +204,37 @@ struct RadioView: View {
 
     private var emptyDescription: String {
         switch model.mode {
-        case .discover: "Try another name, country or category."
+        case .discover: "Try another name, country, language or category."
         case .saved: "Save a station to keep it here."
         case .recent: "Stations you play will appear here."
         }
     }
 }
 
+private struct RadioFilterChip: View {
+    let title: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label {
+                Text(LocalizedStringKey(title))
+            } icon: {
+                Image(systemName: "radio")
+            }
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 13)
+                .padding(.vertical, 9)
+                .foregroundStyle(selected ? Color.white : Color.purple)
+                .background(selected ? Color.purple : Color.purple.opacity(0.12), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 private struct BrowseMenu<Content: View>: View {
+    @Environment(\.locale) private var locale
     let title: String
     let icon: String
     @ViewBuilder let content: Content
@@ -155,7 +243,7 @@ private struct BrowseMenu<Content: View>: View {
         Menu {
             content
         } label: {
-            Label(title, systemImage: icon)
+            Label(localizedUiText(title, locale: locale), systemImage: icon)
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 13)
                 .padding(.vertical, 9)
@@ -165,6 +253,7 @@ private struct BrowseMenu<Content: View>: View {
 }
 
 private struct StationRow: View {
+    @Environment(\.locale) private var locale
     let station: RadioStation
     let isSaved: Bool
     let onPlay: () -> Void
@@ -206,7 +295,10 @@ private struct StationRow: View {
                     .foregroundStyle(isSaved ? .pink : .secondary)
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel(isSaved ? "Remove saved station" : "Save station")
+            .accessibilityLabel(localizedUiText(
+                isSaved ? "Remove saved station" : "Save station",
+                locale: locale
+            ))
         }
         .padding(.vertical, 3)
     }

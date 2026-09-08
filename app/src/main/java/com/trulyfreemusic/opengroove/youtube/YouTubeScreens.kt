@@ -56,7 +56,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.Text as MaterialText
+import com.trulyfreemusic.opengroove.localization.LocalizedText as Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -271,7 +272,7 @@ fun YouTubeWatchScreen(
                 }
                 Column(Modifier.weight(1f)) {
                     Text("YouTube", color = YouTubeRed, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                    Text(video.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    MaterialText(video.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 IconButton(onClick = onToggleSaved) {
                     Icon(
@@ -293,8 +294,8 @@ fun YouTubeWatchScreen(
                     .background(Color.Black),
             )
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(video.title, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Text(video.channelTitle, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                MaterialText(video.title, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                MaterialText(video.channelTitle, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (video.isLive) YouTubeBadge("LIVE")
                     if (video.madeForKids == true) YouTubeBadge("Made for kids")
@@ -355,8 +356,8 @@ private fun YouTubeVideoCard(
             }
             Spacer(Modifier.width(11.dp))
             Column(Modifier.weight(1f)) {
-                Text(video.title, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(
+                MaterialText(video.title, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                MaterialText(
                     video.channelTitle,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
@@ -372,7 +373,7 @@ private fun YouTubeVideoCard(
                     val duration = formatYouTubeDuration(video.durationSeconds)
                     if (duration.isNotBlank()) {
                         Spacer(Modifier.width(7.dp))
-                        Text(duration, fontSize = 10.sp)
+                        MaterialText(duration, fontSize = 10.sp)
                     }
                 }
             }

@@ -25,8 +25,28 @@ struct RadioDirectory: Sendable {
         name: String = "",
         countryCode: String? = nil,
         tag: String? = nil,
+        language: String? = nil,
         offset: Int = 0
     ) async throws -> [RadioStation] {
+        let query = searchQueryItems(
+            name: name,
+            countryCode: countryCode,
+            tag: tag,
+            language: language,
+            offset: offset
+        )
+
+        let data = try await request(path: "/json/stations/search", query: query)
+        return try decodeStations(data)
+    }
+
+    func searchQueryItems(
+        name: String = "",
+        countryCode: String? = nil,
+        tag: String? = nil,
+        language: String? = nil,
+        offset: Int = 0
+    ) -> [URLQueryItem] {
         var query = [
             URLQueryItem(name: "hidebroken", value: "true"),
             URLQueryItem(name: "order", value: "clickcount"),
@@ -34,18 +54,23 @@ struct RadioDirectory: Sendable {
             URLQueryItem(name: "limit", value: String(Self.pageSize)),
             URLQueryItem(name: "offset", value: String(max(0, offset))),
         ]
-        if !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            query.append(URLQueryItem(name: "name", value: name))
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !cleanName.isEmpty {
+            query.append(URLQueryItem(name: "name", value: cleanName))
         }
-        if let countryCode, !countryCode.isEmpty {
-            query.append(URLQueryItem(name: "countrycode", value: countryCode))
+        if let countryCode, !countryCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            query.append(URLQueryItem(name: "countrycode", value: countryCode.uppercased()))
         }
-        if let tag, !tag.isEmpty {
-            query.append(URLQueryItem(name: "tag", value: tag.lowercased()))
+        if let tag, !tag.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            query.append(URLQueryItem(name: "tag", value: tag.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()))
         }
-
-        let data = try await request(path: "/json/stations/search", query: query)
-        return try decodeStations(data)
+        if let language, !language.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            query.append(URLQueryItem(
+                name: "language",
+                value: language.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            ))
+        }
+        return query
     }
 
     func countries() async throws -> [RadioCountry] {

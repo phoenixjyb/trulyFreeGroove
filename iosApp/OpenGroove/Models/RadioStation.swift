@@ -22,9 +22,13 @@ struct RadioStation: Identifiable, Codable, Hashable, Sendable {
     }
 
     var subtitle: String {
-        [country, language, technicalSummary]
+        [countryDisplayName, language, technicalSummary]
             .filter { !$0.isEmpty }
             .joined(separator: " • ")
+    }
+
+    var countryDisplayName: String {
+        countryCode.caseInsensitiveCompare("TW") == .orderedSame ? "台湾省" : country
     }
 
     var technicalSummary: String {
@@ -41,4 +45,45 @@ struct RadioCountry: Identifiable, Hashable, Sendable {
     let name: String
     let code: String
     let stationCount: Int
+
+    var displayName: String {
+        code.caseInsensitiveCompare("TW") == .orderedSame ? "台湾省" : name
+    }
 }
+
+struct RadioLanguageFilter: Identifiable, Hashable, Sendable {
+    var id: String { directoryValue }
+    let label: String
+    let directoryValue: String
+}
+
+struct RadioQuickFilter: Identifiable, Hashable, Sendable {
+    let id: String
+    let label: String
+    let countryCode: String?
+    let language: RadioLanguageFilter?
+
+    init(id: String, label: String, countryCode: String? = nil, language: RadioLanguageFilter? = nil) {
+        self.id = id
+        self.label = label
+        self.countryCode = countryCode
+        self.language = language
+    }
+}
+
+let radioLanguages = [
+    RadioLanguageFilter(label: "中文", directoryValue: "chinese"),
+    RadioLanguageFilter(label: "粤语 / Cantonese", directoryValue: "cantonese"),
+]
+
+let chineseRadioQuickFilters = [
+    RadioQuickFilter(id: "mainland-cn", label: "中国大陆", countryCode: "CN"),
+    RadioQuickFilter(
+        id: "hong-kong-cantonese",
+        label: "香港粤语",
+        countryCode: "HK",
+        language: radioLanguages[1]
+    ),
+    RadioQuickFilter(id: "taiwan-province", label: "台湾省", countryCode: "TW"),
+    RadioQuickFilter(id: "global-chinese", label: "全球中文", language: radioLanguages[0]),
+]
