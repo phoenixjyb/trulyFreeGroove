@@ -93,6 +93,7 @@ The current parity milestone intentionally excludes Android's optional YouTube s
 - The signed app installed and launched on a paired, wired iPhone 16 Plus running iOS 26.6.1 with Developer Mode enabled; CoreDevice then reported the OpenGroove process running.
 - `scripts/run-ios-device.sh` now provides the repeatable generate, sign, build, install and launch path without committing an Apple team or device identifier.
 - This closes development signing, installation and process-launch readiness for the new queue and Chinese-radio source on the attached iPhone 16 Plus only. Visible-screen acceptance, live music/podcast/radio playback, queue edits and restoration, background audio, lock-screen controls, interruptions, persistence and the specified iPhone 15 hardware gate remain open.
+- The same signing-neutral path subsequently built, installed and launched interface-localization commit `9df9011`; CoreDevice reported its process running on the attached iPhone 16 Plus. Physical touch-level EN/简中/繁中 switching, copy review and relaunch persistence remain open and are not inferred from process launch.
 
 ## Next physical iPhone acceptance run
 
