@@ -54,6 +54,13 @@ Every product feature has one shared behavior contract and two platform acceptan
 - Player end notifications are scoped to their owning `AVPlayerItem`; player switches also re-establish the correct audio-session mode and remote-command ownership.
 - These checks prove source and device-target build readiness only. Physical playback, lifecycle and operating-system integration remain open.
 
+## Physical iPhone development integration evidence (2026-09-08)
+
+- Xcode 26.6 generated, built and automatically signed OpenGroove 0.3.0 (1) from source commit `8ec8963` for ARM64 iPhoneOS using a machine-local development-team override.
+- The signed app installed and launched on a paired, wired iPhone 16 Plus running iOS 26.6.1 with Developer Mode enabled; CoreDevice then reported the OpenGroove process running.
+- `scripts/run-ios-device.sh` now provides the repeatable generate, sign, build, install and launch path without committing an Apple team or device identifier.
+- This closes development signing, installation and process-launch readiness on the attached iPhone 16 Plus only. Visible-screen acceptance, live music/podcast/radio playback, background audio, lock-screen controls, interruptions, persistence and the specified iPhone 15 hardware gate remain open.
+
 ## Next physical iPhone acceptance run
 
 1. Record the installed commit and app version, then launch in both light and dark appearance.
