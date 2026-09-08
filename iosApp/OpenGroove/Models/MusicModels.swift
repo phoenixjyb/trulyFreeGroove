@@ -5,6 +5,32 @@ enum MusicPlaybackMode: String, Codable, Sendable {
     case externalOnly
 }
 
+enum MusicRepeatMode: Int, Codable, CaseIterable, Sendable {
+    case off = 0
+    case one = 1
+    case all = 2
+
+    var systemImage: String {
+        self == .one ? "repeat.1" : "repeat"
+    }
+
+    var accessibilityLabel: String {
+        switch self {
+        case .off: "Repeat off"
+        case .one: "Repeat one"
+        case .all: "Repeat all"
+        }
+    }
+
+    var next: MusicRepeatMode {
+        switch self {
+        case .off: .all
+        case .all: .one
+        case .one: .off
+        }
+    }
+}
+
 struct MusicTrack: Identifiable, Codable, Hashable, Sendable {
     let id: String
     let title: String

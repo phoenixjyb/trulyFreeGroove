@@ -12,6 +12,7 @@
 		0E083FDF54E629BCC2A08D3F /* MusicDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1D04B62BE5AD78EBECF4B7 /* MusicDiscoveryView.swift */; };
 		12D80E20DB7D4ADE05D4A506 /* PodcastCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65C1448AA88C39F5B929D4C5 /* PodcastCoreTests.swift */; };
 		1F17B58B8397FABA92DC77B0 /* RadioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B3F707D755900E697A5D546 /* RadioPlayer.swift */; };
+		22A0A2E562597D25E5B3AE22 /* AddTrackToQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E973F2423573248E30EB7ADE /* AddTrackToQueueView.swift */; };
 		2811FD967378D7864D3CD510 /* PodcastPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC759C38FDE6B5DE51E8C859 /* PodcastPlayer.swift */; };
 		2DDD141B769339EDBBDAE498 /* MusicPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96BBABC6D81B4F4BBCE45792 /* MusicPlayer.swift */; };
 		3160C8D615B58A0B27314087 /* PodcastLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A19E99BE0BF73D09D47D3F /* PodcastLibraryStore.swift */; };
@@ -34,6 +35,7 @@
 		C0E8CB9B14A1E6E36B5B3A5F /* PodcastModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80E744F152C42B5582CD8E38 /* PodcastModels.swift */; };
 		C6883FD1C50EF2B0DE9475F0 /* RadioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223D2B5D1B5F659462831E92 /* RadioView.swift */; };
 		CDFA179F1E5280B3B570132F /* SharedPolicyBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A5EF63262D354DB2E6ECA11 /* SharedPolicyBridge.swift */; };
+		CE2962840168CDA104062278 /* MusicQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F147EFC59E527C75082F1532 /* MusicQueueStore.swift */; };
 		D8FE70A8A7B9E142D353EAB7 /* PodcastPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE42256F8D2F7FD633F372EF /* PodcastPlayerView.swift */; };
 		D9B6D67EDA67879A36417CA7 /* PodcastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C4BD16B6B5C2E2ED312BDEC /* PodcastViewModel.swift */; };
 		EADC40D892049A2A96742550 /* PodcastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11509DD4729DDB00244E215F /* PodcastView.swift */; };
@@ -85,6 +87,8 @@
 		BE887B0C75D7459CAEEA7BF1 /* MusicViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicViewModel.swift; sourceTree = "<group>"; };
 		CCACF86A14523A8D3480AD9B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DD298289D9EC730EB89A42E4 /* JamendoMusicCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JamendoMusicCatalog.swift; sourceTree = "<group>"; };
+		E973F2423573248E30EB7ADE /* AddTrackToQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddTrackToQueueView.swift; sourceTree = "<group>"; };
+		F147EFC59E527C75082F1532 /* MusicQueueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicQueueStore.swift; sourceTree = "<group>"; };
 		F3448DABF46CE091F4A9EA8D /* PodcastBackgroundRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastBackgroundRefresh.swift; sourceTree = "<group>"; };
 		FC759C38FDE6B5DE51E8C859 /* PodcastPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastPlayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -156,6 +160,7 @@
 		74C6A6FC40CF96BA87787D3F /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				E973F2423573248E30EB7ADE /* AddTrackToQueueView.swift */,
 				454EAD5B7BED5D682B8A907B /* ContentView.swift */,
 				6E1D04B62BE5AD78EBECF4B7 /* MusicDiscoveryView.swift */,
 				9B65C88A3C5FCFE86350CB2D /* MusicLibraryView.swift */,
@@ -172,6 +177,7 @@
 			isa = PBXGroup;
 			children = (
 				9C73EEC44A892210D508AA02 /* MusicLibraryStore.swift */,
+				F147EFC59E527C75082F1532 /* MusicQueueStore.swift */,
 				94A19E99BE0BF73D09D47D3F /* PodcastLibraryStore.swift */,
 				87B14FDA765A25352B96CDF8 /* RecentStationStore.swift */,
 				08DBAD6F63C44B1E15763AC5 /* SavedStationStore.swift */,
@@ -306,6 +312,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22A0A2E562597D25E5B3AE22 /* AddTrackToQueueView.swift in Sources */,
 				57BC7C526E9E84A351D3092B /* ContentView.swift in Sources */,
 				A18B31B1A9B47988492FF031 /* JamendoMusicCatalog.swift in Sources */,
 				0E083FDF54E629BCC2A08D3F /* MusicDiscoveryView.swift in Sources */,
@@ -314,6 +321,7 @@
 				5876961D4B8929F119FCAC39 /* MusicModels.swift in Sources */,
 				2DDD141B769339EDBBDAE498 /* MusicPlayer.swift in Sources */,
 				6B39D270C0B5C6E79DA05CB0 /* MusicPlayerView.swift in Sources */,
+				CE2962840168CDA104062278 /* MusicQueueStore.swift in Sources */,
 				91F7C059ACA2F778912ABA82 /* MusicViewModel.swift in Sources */,
 				80BD3762305FCC5657EAC578 /* OpenGrooveApp.swift in Sources */,
 				06BE6C788E7A9EE78F7E45FC /* PodcastBackgroundRefresh.swift in Sources */,

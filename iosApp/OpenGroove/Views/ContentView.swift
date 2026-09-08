@@ -54,7 +54,10 @@ struct ContentView: View {
             PodcastBackgroundRefresh.schedule()
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase != .active { podcastPlayer.checkpointProgress() }
+            if newPhase != .active {
+                podcastPlayer.checkpointProgress()
+                musicPlayer.checkpointQueue()
+            }
         }
     }
 }

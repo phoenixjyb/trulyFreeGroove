@@ -6,6 +6,7 @@ struct MusicLibraryView: View {
     @EnvironmentObject private var radioPlayer: RadioPlayer
     @EnvironmentObject private var podcastPlayer: PodcastPlayer
     @State private var showCreatePlaylist = false
+    @State private var queueTrack: MusicTrack?
 
     let onOpenPlayer: () -> Void
 
@@ -20,25 +21,39 @@ struct MusicLibraryView: View {
                     )
                 } else {
                     ForEach(library.playlists) { playlist in
-                        Section("\(playlist.name) • \(playlist.tracks.count) tracks") {
+                        Section {
                             if playlist.tracks.isEmpty {
                                 Text("No tracks yet").foregroundStyle(.secondary)
                             } else {
-                                ForEach(playlist.tracks) { track in
+                                ForEach(Array(playlist.tracks.enumerated()), id: \.element.id) { index, track in
                                     PlaylistMusicTrackRow(
                                         track: track,
                                         onPlay: {
                                             radioPlayer.yieldRemoteControl()
                                             podcastPlayer.deactivateForRadio()
-                                            musicPlayer.play(track)
+                                            musicPlayer.play(queue: playlist.tracks, startingAt: index)
                                             onOpenPlayer()
                                         },
+                                        onQueue: { queueTrack = track },
                                         onRemove: { library.remove(track, from: playlist.id) }
                                     )
                                     .swipeActions {
                                         Button(role: .destructive) { library.remove(track, from: playlist.id) } label: {
                                             Label("Remove", systemImage: "trash")
                                         }
+                                    }
+                                }
+                            }
+                        } header: {
+                            HStack {
+                                Text("\(playlist.name) • \(playlist.tracks.count) tracks")
+                                Spacer()
+                                if !playlist.tracks.isEmpty {
+                                    Button("Play all", systemImage: "play.fill") {
+                                        radioPlayer.yieldRemoteControl()
+                                        podcastPlayer.deactivateForRadio()
+                                        musicPlayer.play(queue: playlist.tracks)
+                                        onOpenPlayer()
                                     }
                                 }
                             }
@@ -53,6 +68,7 @@ struct MusicLibraryView: View {
                 }
             }
             .sheet(isPresented: $showCreatePlaylist) { CreateMusicPlaylistView() }
+            .sheet(item: $queueTrack) { track in AddTrackToQueueView(track: track) }
         }
     }
 }
@@ -60,6 +76,7 @@ struct MusicLibraryView: View {
 private struct PlaylistMusicTrackRow: View {
     let track: MusicTrack
     let onPlay: () -> Void
+    let onQueue: () -> Void
     let onRemove: () -> Void
 
     var body: some View {
@@ -75,6 +92,8 @@ private struct PlaylistMusicTrackRow: View {
             .buttonStyle(.plain)
             Link(destination: track.sourceURL) { Image(systemName: "arrow.up.right.square") }
                 .accessibilityLabel("Open source")
+            Button(action: onQueue) { Image(systemName: "text.line.first.and.arrowtriangle.forward") }
+                .buttonStyle(.borderless).accessibilityLabel("Add to queue")
             Button(role: .destructive, action: onRemove) { Image(systemName: "trash") }
                 .buttonStyle(.borderless).accessibilityLabel("Remove from playlist")
         }

@@ -5,7 +5,7 @@ struct MusicDiscoveryView: View {
     @EnvironmentObject private var radioPlayer: RadioPlayer
     @EnvironmentObject private var podcastPlayer: PodcastPlayer
     @StateObject private var model = MusicViewModel()
-    @State private var trackToAdd: MusicTrack?
+    @State private var presentedSheet: MusicDiscoverySheet?
 
     let onOpenPlayer: () -> Void
 
@@ -69,7 +69,8 @@ struct MusicDiscoveryView: View {
                             MusicTrackRow(
                                 track: track,
                                 onPlay: { play(track) },
-                                onAdd: { trackToAdd = track }
+                                onAdd: { presentedSheet = .playlist(track) },
+                                onQueue: { presentedSheet = .queue(track) }
                             )
                         }
                     }
@@ -84,7 +85,12 @@ struct MusicDiscoveryView: View {
             .onSubmit(of: .search) { Task { await model.search() } }
             .refreshable { await model.search() }
             .task { await model.start() }
-            .sheet(item: $trackToAdd) { track in AddTrackToPlaylistView(track: track) }
+            .sheet(item: $presentedSheet) { sheet in
+                switch sheet {
+                case let .playlist(track): AddTrackToPlaylistView(track: track)
+                case let .queue(track): AddTrackToQueueView(track: track)
+                }
+            }
         }
     }
 
@@ -144,6 +150,7 @@ struct MusicTrackRow: View {
     let track: MusicTrack
     let onPlay: () -> Void
     let onAdd: () -> Void
+    let onQueue: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -162,10 +169,24 @@ struct MusicTrackRow: View {
             Spacer()
             Button(action: onAdd) { Image(systemName: "text.badge.plus") }
                 .buttonStyle(.borderless).accessibilityLabel("Add to playlist")
+            Button(action: onQueue) { Image(systemName: "text.line.first.and.arrowtriangle.forward") }
+                .buttonStyle(.borderless).accessibilityLabel("Add to queue")
             Button(action: onPlay) { Image(systemName: "play.fill") }
                 .buttonStyle(.borderedProminent).buttonBorderShape(.circle)
         }
         .padding(.vertical, 4)
+    }
+}
+
+private enum MusicDiscoverySheet: Identifiable {
+    case playlist(MusicTrack)
+    case queue(MusicTrack)
+
+    var id: String {
+        switch self {
+        case let .playlist(track): "playlist:\(track.providerName):\(track.id)"
+        case let .queue(track): "queue:\(track.providerName):\(track.id)"
+        }
     }
 }
 

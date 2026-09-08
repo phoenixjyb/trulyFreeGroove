@@ -34,15 +34,43 @@ struct RadioView: View {
             .listRowBackground(Color.clear)
 
             if model.mode == .discover {
+                Section {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 9) {
+                            ForEach(chineseRadioQuickFilters) { filter in
+                                RadioFilterChip(
+                                    title: filter.label,
+                                    selected: model.selectedQuickFilterID == filter.id
+                                ) {
+                                    Task { await model.select(quickFilter: filter) }
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Chinese radio")
+                        Text("中国大陆、香港粤语、台湾省及全球中文电台")
+                            .font(.caption)
+                            .textCase(nil)
+                    }
+                }
+
                 Section("Browse") {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 9) {
-                            BrowseMenu(title: model.selectedCountry?.name ?? "Country", icon: "globe.asia.australia") {
+                            BrowseMenu(title: model.selectedCountry?.displayName ?? "Country", icon: "globe.asia.australia") {
                                 Button("All countries") { Task { await model.select(country: nil) } }
                                 ForEach(model.countries.prefix(80)) { country in
-                                    Button("\(country.name) (\(country.stationCount))") {
+                                    Button("\(country.displayName) (\(country.stationCount))") {
                                         Task { await model.select(country: country) }
                                     }
+                                }
+                            }
+                            BrowseMenu(title: model.selectedLanguage?.label ?? "Language", icon: "character.bubble") {
+                                Button("All languages") { Task { await model.select(language: nil) } }
+                                ForEach(radioLanguages) { language in
+                                    Button(language.label) { Task { await model.select(language: language) } }
                                 }
                             }
                             BrowseMenu(title: model.selectedTag ?? "Genre", icon: "music.quarternote.3") {
@@ -56,6 +84,11 @@ struct RadioView: View {
                                     Button(category) { Task { await model.select(tag: category) } }
                                 }
                             }
+                        }
+                    }
+                    if model.selectedCountry != nil || model.selectedTag != nil || model.selectedLanguage != nil {
+                        Button("Clear filters", systemImage: "xmark.circle") {
+                            Task { await model.clearFilters() }
                         }
                     }
                 }
@@ -123,9 +156,17 @@ struct RadioView: View {
 
     private var listTitle: String {
         switch model.mode {
-        case .discover: "Working internet streams"
-        case .saved: "Saved stations"
-        case .recent: "Recently played"
+        case .discover:
+            if let selectedID = model.selectedQuickFilterID,
+               let filter = chineseRadioQuickFilters.first(where: { $0.id == selectedID }) {
+                return filter.label
+            }
+            if let country = model.selectedCountry { return country.displayName }
+            if let language = model.selectedLanguage { return language.label }
+            if let tag = model.selectedTag { return tag }
+            return model.query.isEmpty ? "Working internet streams" : "Results for “\(model.query)”"
+        case .saved: return "Saved stations"
+        case .recent: return "Recently played"
         }
     }
 
@@ -139,10 +180,28 @@ struct RadioView: View {
 
     private var emptyDescription: String {
         switch model.mode {
-        case .discover: "Try another name, country or category."
+        case .discover: "Try another name, country, language or category."
         case .saved: "Save a station to keep it here."
         case .recent: "Stations you play will appear here."
         }
+    }
+}
+
+private struct RadioFilterChip: View {
+    let title: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: "radio")
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 13)
+                .padding(.vertical, 9)
+                .foregroundStyle(selected ? Color.white : Color.purple)
+                .background(selected ? Color.purple : Color.purple.opacity(0.12), in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }
 

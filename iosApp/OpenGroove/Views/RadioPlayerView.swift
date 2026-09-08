@@ -107,7 +107,7 @@ struct RadioMiniPlayer: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     VStack(alignment: .leading) {
                         Text(station.name).font(.subheadline.bold()).lineLimit(1)
-                        Text(station.country).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        Text(station.countryDisplayName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

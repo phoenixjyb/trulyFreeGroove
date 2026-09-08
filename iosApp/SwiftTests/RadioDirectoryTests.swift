@@ -53,6 +53,38 @@ func brokenAndUnsupportedStationsFailClosed() throws {
     #expect(try RadioDirectory().decodeStations(payload).isEmpty)
 }
 
+@Test
+func chineseDirectoryFiltersCombineCountryAndLanguage() {
+    let query = RadioDirectory().searchQueryItems(
+        name: " 香港電台 ",
+        countryCode: "hk",
+        tag: nil,
+        language: "Cantonese",
+        offset: -4
+    )
+    let parameters = Dictionary(uniqueKeysWithValues: query.compactMap { item in
+        item.value.map { (item.name, $0) }
+    })
+
+    #expect(parameters["name"] == "香港電台")
+    #expect(parameters["countrycode"] == "HK")
+    #expect(parameters["language"] == "cantonese")
+    #expect(parameters["offset"] == "0")
+    #expect(parameters["hidebroken"] == "true")
+}
+
+@Test
+func chineseRadioQuickFiltersAndTaiwanLabelMatchAndroid() throws {
+    let hongKong = try #require(chineseRadioQuickFilters.first(where: { $0.id == "hong-kong-cantonese" }))
+    #expect(hongKong.countryCode == "HK")
+    #expect(hongKong.language?.directoryValue == "cantonese")
+
+    let taiwan = RadioCountry(name: "Taiwan, Republic Of China", code: "TW", stationCount: 120)
+    #expect(taiwan.displayName == "台湾省")
+    #expect(taiwan.code == "TW")
+    #expect(chineseRadioQuickFilters.first(where: { $0.countryCode == "TW" })?.label == "台湾省")
+}
+
 @MainActor
 @Test
 func recentStationsPersistDeduplicateAndCapAtTwenty() throws {
