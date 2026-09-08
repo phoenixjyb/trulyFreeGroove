@@ -14,9 +14,11 @@
 		1F17B58B8397FABA92DC77B0 /* RadioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B3F707D755900E697A5D546 /* RadioPlayer.swift */; };
 		22A0A2E562597D25E5B3AE22 /* AddTrackToQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E973F2423573248E30EB7ADE /* AddTrackToQueueView.swift */; };
 		2811FD967378D7864D3CD510 /* PodcastPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC759C38FDE6B5DE51E8C859 /* PodcastPlayer.swift */; };
+		293C0FA65B4E2E8A05FC7172 /* UiLocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B74538EB93F6BA667917AB4B /* UiLocalizationTests.swift */; };
 		2DDD141B769339EDBBDAE498 /* MusicPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96BBABC6D81B4F4BBCE45792 /* MusicPlayer.swift */; };
 		3160C8D615B58A0B27314087 /* PodcastLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A19E99BE0BF73D09D47D3F /* PodcastLibraryStore.swift */; };
 		43F6737445509AEA05A85116 /* RecentStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B14FDA765A25352B96CDF8 /* RecentStationStore.swift */; };
+		49254CB3D9E44F5468B95A39 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B9E1EF68981E68772252AEC1 /* Localizable.strings */; };
 		4C6F8771AF8D9D39BBB43EB9 /* SavedStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08DBAD6F63C44B1E15763AC5 /* SavedStationStore.swift */; };
 		536F3975581A8B2F71F03E93 /* RadioDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015D84F2FDA584C2CC3EDE5B /* RadioDirectory.swift */; };
 		57BC7C526E9E84A351D3092B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EAD5B7BED5D682B8A907B /* ContentView.swift */; };
@@ -29,6 +31,7 @@
 		82FE20A5B61105A7B5175BDD /* RadioPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DB17890B5431EAC3F1FB1BF /* RadioPlayerView.swift */; };
 		908629FDC0E6C89D9C9154B5 /* RadioDirectoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C9DFA475965295CC000C41 /* RadioDirectoryTests.swift */; };
 		91F7C059ACA2F778912ABA82 /* MusicViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE887B0C75D7459CAEEA7BF1 /* MusicViewModel.swift */; };
+		94636DE13631C38941D73B22 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 081E43E59F8526E31FB000F5 /* Localizable.strings */; };
 		949078AE01F9A00BA3CA64BC /* MusicLibraryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C73EEC44A892210D508AA02 /* MusicLibraryStore.swift */; };
 		A18B31B1A9B47988492FF031 /* JamendoMusicCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD298289D9EC730EB89A42E4 /* JamendoMusicCatalog.swift */; };
 		B687824D2CED4048CCA4B7ED /* PodcastFeedDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0AE66C04B3643D8FF79DCA /* PodcastFeedDirectory.swift */; };
@@ -38,6 +41,7 @@
 		CE2962840168CDA104062278 /* MusicQueueStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F147EFC59E527C75082F1532 /* MusicQueueStore.swift */; };
 		D8FE70A8A7B9E142D353EAB7 /* PodcastPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE42256F8D2F7FD633F372EF /* PodcastPlayerView.swift */; };
 		D9B6D67EDA67879A36417CA7 /* PodcastViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C4BD16B6B5C2E2ED312BDEC /* PodcastViewModel.swift */; };
+		DBA64A2B29E2B124EAF0E0BE /* UiLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2702384ABC78400801922454 /* UiLanguage.swift */; };
 		EADC40D892049A2A96742550 /* PodcastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11509DD4729DDB00244E215F /* PodcastView.swift */; };
 		EE87B916B39542D2434AFE3B /* PodcastCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CA7B2D2DE1DEB6A2C65582A /* PodcastCatalog.swift */; };
 		F6253FA25EAE35DA6CA3021B /* RadioViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87462B98A7214B4786078264 /* RadioViewModel.swift */; };
@@ -56,12 +60,14 @@
 /* Begin PBXFileReference section */
 		015D84F2FDA584C2CC3EDE5B /* RadioDirectory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioDirectory.swift; sourceTree = "<group>"; };
 		04C9DFA475965295CC000C41 /* RadioDirectoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioDirectoryTests.swift; sourceTree = "<group>"; };
+		081E43E59F8526E31FB000F5 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		08DBAD6F63C44B1E15763AC5 /* SavedStationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedStationStore.swift; sourceTree = "<group>"; };
 		11509DD4729DDB00244E215F /* PodcastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastView.swift; sourceTree = "<group>"; };
 		1B3F707D755900E697A5D546 /* RadioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioPlayer.swift; sourceTree = "<group>"; };
 		1F0FD4B715CB22163EF7EDA0 /* OpenGrooveApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenGrooveApp.swift; sourceTree = "<group>"; };
 		1F7082386D6F20BEC3D91887 /* WikimediaMusicCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikimediaMusicCatalog.swift; sourceTree = "<group>"; };
 		223D2B5D1B5F659462831E92 /* RadioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioView.swift; sourceTree = "<group>"; };
+		2702384ABC78400801922454 /* UiLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UiLanguage.swift; sourceTree = "<group>"; };
 		2DB17890B5431EAC3F1FB1BF /* RadioPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioPlayerView.swift; sourceTree = "<group>"; };
 		3CA7B2D2DE1DEB6A2C65582A /* PodcastCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastCatalog.swift; sourceTree = "<group>"; };
 		3D18BEDD734033487F05229E /* OpenGroove.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenGroove.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -84,6 +90,8 @@
 		9C73EEC44A892210D508AA02 /* MusicLibraryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicLibraryStore.swift; sourceTree = "<group>"; };
 		A9ECA453F4EEB0D4E677ABC5 /* RadioStation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioStation.swift; sourceTree = "<group>"; };
 		AE42256F8D2F7FD633F372EF /* PodcastPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastPlayerView.swift; sourceTree = "<group>"; };
+		B74538EB93F6BA667917AB4B /* UiLocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UiLocalizationTests.swift; sourceTree = "<group>"; };
+		B9E1EF68981E68772252AEC1 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		BE887B0C75D7459CAEEA7BF1 /* MusicViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicViewModel.swift; sourceTree = "<group>"; };
 		CCACF86A14523A8D3480AD9B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DD298289D9EC730EB89A42E4 /* JamendoMusicCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JamendoMusicCatalog.swift; sourceTree = "<group>"; };
@@ -109,6 +117,7 @@
 				7F804CEE1F5A2A658243D62E /* MusicCoreTests.swift */,
 				65C1448AA88C39F5B929D4C5 /* PodcastCoreTests.swift */,
 				04C9DFA475965295CC000C41 /* RadioDirectoryTests.swift */,
+				B74538EB93F6BA667917AB4B /* UiLocalizationTests.swift */,
 			);
 			path = SwiftTests;
 			sourceTree = "<group>";
@@ -133,6 +142,7 @@
 				6B23619AFD7797FB7C9B9A1E /* MusicModels.swift */,
 				80E744F152C42B5582CD8E38 /* PodcastModels.swift */,
 				A9ECA453F4EEB0D4E677ABC5 /* RadioStation.swift */,
+				2702384ABC78400801922454 /* UiLanguage.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -189,6 +199,8 @@
 			isa = PBXGroup;
 			children = (
 				CCACF86A14523A8D3480AD9B /* Info.plist */,
+				B9E1EF68981E68772252AEC1 /* Localizable.strings */,
+				081E43E59F8526E31FB000F5 /* Localizable.strings */,
 				1F0FD4B715CB22163EF7EDA0 /* OpenGrooveApp.swift */,
 				622772714F586A1CBD3AFD94 /* Models */,
 				724F1D073F5DD5E9CD1567AA /* Playback */,
@@ -236,6 +248,7 @@
 			buildPhases = (
 				0323122E836325DBDC26804E /* Build shared Kotlin framework */,
 				8A22D83F87EC5A9A5887502C /* Sources */,
+				DFC11BD997FA82F4795B3F60 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -271,6 +284,8 @@
 			knownRegions = (
 				Base,
 				en,
+				"zh-Hans",
+				"zh-Hant",
 			);
 			mainGroup = FA364EACCAC7A36DF91D48F1;
 			minimizedProjectReferenceProxies = 1;
@@ -284,6 +299,18 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		DFC11BD997FA82F4795B3F60 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49254CB3D9E44F5468B95A39 /* Localizable.strings in Resources */,
+				94636DE13631C38941D73B22 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		0323122E836325DBDC26804E /* Build shared Kotlin framework */ = {
@@ -342,6 +369,7 @@
 				43F6737445509AEA05A85116 /* RecentStationStore.swift in Sources */,
 				4C6F8771AF8D9D39BBB43EB9 /* SavedStationStore.swift in Sources */,
 				CDFA179F1E5280B3B570132F /* SharedPolicyBridge.swift in Sources */,
+				DBA64A2B29E2B124EAF0E0BE /* UiLanguage.swift in Sources */,
 				020CB9918B9CB176E0840F84 /* WikimediaMusicCatalog.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -353,6 +381,7 @@
 				77D24C4B4162D53B9584E3F0 /* MusicCoreTests.swift in Sources */,
 				12D80E20DB7D4ADE05D4A506 /* PodcastCoreTests.swift in Sources */,
 				908629FDC0E6C89D9C9154B5 /* RadioDirectoryTests.swift in Sources */,
+				293C0FA65B4E2E8A05FC7172 /* UiLocalizationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

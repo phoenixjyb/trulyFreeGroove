@@ -9,6 +9,7 @@ struct OpenGrooveApp: App {
     @StateObject private var podcastLibrary = PodcastLibraryStore()
     @StateObject private var musicPlayer = MusicPlayer()
     @StateObject private var musicLibrary = MusicLibraryStore()
+    @StateObject private var uiLanguage = UiLanguageStore()
 
     var body: some Scene {
         WindowGroup {
@@ -20,6 +21,8 @@ struct OpenGrooveApp: App {
                 .environmentObject(podcastLibrary)
                 .environmentObject(musicPlayer)
                 .environmentObject(musicLibrary)
+                .environmentObject(uiLanguage)
+                .environment(\.locale, uiLanguage.selection.locale)
                 .tint(.purple)
         }
         .backgroundTask(.appRefresh(PodcastBackgroundRefresh.identifier)) {

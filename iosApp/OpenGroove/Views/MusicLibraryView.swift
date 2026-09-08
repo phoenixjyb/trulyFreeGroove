@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MusicLibraryView: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var library: MusicLibraryStore
     @EnvironmentObject private var musicPlayer: MusicPlayer
     @EnvironmentObject private var radioPlayer: RadioPlayer
@@ -46,7 +47,11 @@ struct MusicLibraryView: View {
                             }
                         } header: {
                             HStack {
-                                Text("\(playlist.name) • \(playlist.tracks.count) tracks")
+                                Text(localizedUiFormat(
+                                    "%@ • %ld tracks",
+                                    locale: locale,
+                                    arguments: [playlist.name, playlist.tracks.count]
+                                ))
                                 Spacer()
                                 if !playlist.tracks.isEmpty {
                                     Button("Play all", systemImage: "play.fill") {

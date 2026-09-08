@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PodcastPlayerView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var player: PodcastPlayer
 
     var body: some View {
@@ -81,16 +82,27 @@ struct PodcastPlayerView: View {
                                 Menu {
                                     Button("Off") { player.setSleepTimer(minutes: nil) }
                                     ForEach(PodcastPlaybackSettings.sleepTimerMinutes, id: \.self) { minutes in
-                                        Button("\(minutes) minutes") { player.setSleepTimer(minutes: minutes) }
+                                        Button(localizedUiFormat(
+                                            "%ld minutes",
+                                            locale: locale,
+                                            arguments: [minutes]
+                                        )) { player.setSleepTimer(minutes: minutes) }
                                     }
                                 } label: {
-                                    Label(player.sleepTimerEnd == nil ? "Sleep" : "Timer on", systemImage: "moon.zzz")
+                                    Label(
+                                        localizedUiText(
+                                            player.sleepTimerEnd == nil ? "Sleep" : "Timer on",
+                                            locale: locale
+                                        ),
+                                        systemImage: "moon.zzz"
+                                    )
                                 }
                             }
                             .buttonStyle(.bordered)
 
                             if let error = player.errorMessage {
-                                Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                                Label(localizedUiText(error, locale: locale), systemImage: "exclamationmark.triangle")
+                                    .foregroundStyle(.red)
                             }
 
                             if !player.queue.isEmpty {

@@ -21,7 +21,7 @@ The current parity milestone intentionally excludes Android's optional YouTube s
 | Podcast playback | Public publisher enclosure policy, queue, 0.75×–2× speed and 15–60 minute timer | Media3 service | AVPlayer queue, resume, automatic advance, speed, sleep timer and system commands built on iOS Simulator | Physical background audio, controls, timer and interruption checks on both phones |
 | Podcast metadata refresh | Metadata-only, approximately 12-hour cadence | WorkManager periodic job | BGAppRefreshTask request; opportunistic system scheduling | Observe refresh on physical Android and iPhone under normal power/network conditions |
 | Theme | Product design tokens | System light/dark | System light/dark; simulator shell visually checked | Physical light/dark comparison |
-| UI language | Interface locale is independent from catalog/content-language filters | Persistent EN, 简中 and 繁中 selector; fresh installs follow the device locale | English only; intentionally deferred for the Android-first milestone | Physical Android switch/relaunch check, then implement and verify iOS parity |
+| UI language | Interface locale is independent from catalog/content-language filters | Persistent EN, 简中 and 繁中 selector; fresh installs follow the device locale | Same persistent selector and device-locale default built, unit-tested and visually checked on iPhone 15 Simulator | Physical switch, relaunch and screen-by-screen copy review on both phones |
 
 ## Android reliability hardening evidence (2026-08-28)
 
@@ -60,21 +60,23 @@ The current parity milestone intentionally excludes Android's optional YouTube s
 - iOS commit `83e518c` uses the same four presets and directory values. Swift tests cover combined country/language query normalization plus the 台湾省 and Hong Kong Cantonese boundaries; a live iPhone 15 Simulator run displayed the shortcuts and returned Hong Kong Cantonese directory results.
 - Those live results prove directory discovery only. Physical search, audio playback, save/recent persistence and lifecycle acceptance remain open on both platforms.
 
-## Android interface localization evidence (2026-09-08)
+## Android and iOS interface localization evidence (2026-09-08)
 
 - A compact global selector exposes EN, 简中 and 繁中 without changing the selected music, podcast, YouTube or radio content filters.
 - The selected interface locale is persisted, drives Android's per-app locale on Android 13 and newer, and recreates the activity safely on older supported versions. With no prior choice, the interface follows the device language and uses Traditional Chinese for Hong Kong, Macao, Taiwan or Hant locales.
 - Navigation, discovery, library, radio, podcast, YouTube, playback controls and known application-generated errors have localized Android copy. Provider titles, artist names, station names, podcast metadata, video metadata and user playlist names remain provider/user content rather than translated labels.
-- Focused JVM tests cover locale selection, both Chinese scripts, dynamic labels, error copy and the distinct meanings of country/region browsing versus Country music. Physical Android light/dark switching, language switching, relaunch persistence and screen-by-screen copy review remain open acceptance gates; iOS localization is intentionally deferred.
+- iOS now follows the same boundary across Discover, Library, Radio, Podcasts and playback controls. It uses the same EN, 简中 and 繁中 choices without changing music, podcast or radio content filters, preserves provider/user content, persists the choice locally and defaults new installs from the device locale, including Hant and Hong Kong/Macao/Taiwan region handling.
+- Focused JVM and Swift tests cover locale selection, persistence, both Chinese scripts, dynamic labels, error copy and the preservation of provider/user content. The iPhone 15 Simulator visibly switched English to Simplified Chinese, then Traditional Chinese, and retained Traditional Chinese after termination and relaunch.
+- Physical Android and iPhone light/dark switching, language switching, relaunch persistence and screen-by-screen copy review remain open acceptance gates.
 - The full local Android gate passes with 31 app tests and 16 shared tests, zero lint findings, and a successfully assembled debug APK. No emulator was used.
 
 ## Current iOS build evidence
 
 - Xcode 26.6 built the Debug application and passed tests for an iPhone 15 simulator running iOS 26.5.
 - The Xcode build phase linked the Kotlin `OpenGrooveShared` framework, and Swift resolved the shared playback-policy API.
-- Twenty-three Swift tests passed in the iOS Simulator test bundle: ten music catalog/handoff/playlist/policy/queue tests, eight podcast catalog/feed/persistence/control-contract tests, and five radio directory/filter/recent-store tests.
+- Twenty-seven Swift tests passed in the iOS Simulator test bundle: the existing music, podcast and radio coverage plus four interface-localization tests for defaults, persistence, both Chinese scripts, dynamic copy and provider/user-content preservation.
 - The built application installed and launched in the simulator, and the initial SwiftUI shell rendered without a crash.
-- Discover, official handoffs, Library/create-playlist, Podcasts and direct publisher-RSS screens were visually checked in the iPhone 15 simulator.
+- Discover, official handoffs, Library/create-playlist, Podcasts and direct publisher-RSS screens were visually checked in the iPhone 15 simulator. The global EN/简中/繁中 selector also switched Discover and Radio live and retained the selected locale across relaunch.
 - Simulator rendering and live directory discovery do not prove physical playback, background behavior, system controls or lifecycle acceptance on the target iPhone 15.
 
 ## Pre-device hardening evidence (2026-08-28)

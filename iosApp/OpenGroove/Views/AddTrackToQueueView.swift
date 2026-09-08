@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AddTrackToQueueView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var player: MusicPlayer
 
     let track: MusicTrack
@@ -11,7 +12,10 @@ struct AddTrackToQueueView: View {
             Form {
                 Section {
                     LabeledContent("Track", value: track.title)
-                    LabeledContent("Queue", value: "\(player.queue.count) tracks")
+                    LabeledContent(
+                        "Queue",
+                        value: localizedUiFormat("%ld tracks", locale: locale, arguments: [player.queue.count])
+                    )
                 }
 
                 Section {

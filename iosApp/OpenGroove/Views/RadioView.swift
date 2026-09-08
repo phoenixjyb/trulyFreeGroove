@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct RadioView: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var player: RadioPlayer
     @EnvironmentObject private var podcastPlayer: PodcastPlayer
     @EnvironmentObject private var musicPlayer: MusicPlayer
@@ -26,7 +27,7 @@ struct RadioView: View {
             Section {
                 Picker("Stations", selection: $model.mode) {
                     ForEach(RadioViewModel.ListMode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
+                        Text(LocalizedStringKey(mode.rawValue)).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -70,18 +71,30 @@ struct RadioView: View {
                             BrowseMenu(title: model.selectedLanguage?.label ?? "Language", icon: "character.bubble") {
                                 Button("All languages") { Task { await model.select(language: nil) } }
                                 ForEach(radioLanguages) { language in
-                                    Button(language.label) { Task { await model.select(language: language) } }
+                                    Button {
+                                        Task { await model.select(language: language) }
+                                    } label: {
+                                        Text(LocalizedStringKey(language.label))
+                                    }
                                 }
                             }
                             BrowseMenu(title: model.selectedTag ?? "Genre", icon: "music.quarternote.3") {
                                 Button("All genres") { Task { await model.select(tag: nil) } }
                                 ForEach(genres, id: \.self) { genre in
-                                    Button(genre) { Task { await model.select(tag: genre) } }
+                                    Button {
+                                        Task { await model.select(tag: genre) }
+                                    } label: {
+                                        Text(LocalizedStringKey(genre))
+                                    }
                                 }
                             }
                             BrowseMenu(title: "Category", icon: "square.grid.2x2") {
                                 ForEach(categories, id: \.self) { category in
-                                    Button(category) { Task { await model.select(tag: category) } }
+                                    Button {
+                                        Task { await model.select(tag: category) }
+                                    } label: {
+                                        Text(LocalizedStringKey(category))
+                                    }
                                 }
                             }
                         }
@@ -106,13 +119,13 @@ struct RadioView: View {
             } else if visibleStations.isEmpty {
                 Section {
                     ContentUnavailableView(
-                        emptyTitle,
+                        localizedUiText(emptyTitle, locale: locale),
                         systemImage: model.mode == .saved ? "heart" : "radio",
-                        description: Text(emptyDescription)
+                        description: Text(localizedUiText(emptyDescription, locale: locale))
                     )
                 }
             } else {
-                Section(listTitle) {
+                Section(localizedListTitle) {
                     ForEach(visibleStations) { station in
                         StationRow(
                             station: station,
@@ -137,7 +150,7 @@ struct RadioView: View {
 
             if model.mode == .discover, let error = model.errorMessage {
                 Section {
-                    Label(error, systemImage: "exclamationmark.triangle")
+                    Label(localizedUiText(error, locale: locale), systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.red)
                 }
             }
@@ -170,6 +183,17 @@ struct RadioView: View {
         }
     }
 
+    private var localizedListTitle: String {
+        if model.mode == .discover, !model.query.isEmpty,
+           model.selectedQuickFilterID == nil,
+           model.selectedCountry == nil,
+           model.selectedLanguage == nil,
+           model.selectedTag == nil {
+            return localizedUiFormat("Results for “%@”", locale: locale, arguments: [model.query])
+        }
+        return localizedUiText(listTitle, locale: locale)
+    }
+
     private var emptyTitle: String {
         switch model.mode {
         case .discover: "No stations found"
@@ -194,7 +218,11 @@ private struct RadioFilterChip: View {
 
     var body: some View {
         Button(action: action) {
-            Label(title, systemImage: "radio")
+            Label {
+                Text(LocalizedStringKey(title))
+            } icon: {
+                Image(systemName: "radio")
+            }
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 13)
                 .padding(.vertical, 9)
@@ -206,6 +234,7 @@ private struct RadioFilterChip: View {
 }
 
 private struct BrowseMenu<Content: View>: View {
+    @Environment(\.locale) private var locale
     let title: String
     let icon: String
     @ViewBuilder let content: Content
@@ -214,7 +243,7 @@ private struct BrowseMenu<Content: View>: View {
         Menu {
             content
         } label: {
-            Label(title, systemImage: icon)
+            Label(localizedUiText(title, locale: locale), systemImage: icon)
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 13)
                 .padding(.vertical, 9)
@@ -224,6 +253,7 @@ private struct BrowseMenu<Content: View>: View {
 }
 
 private struct StationRow: View {
+    @Environment(\.locale) private var locale
     let station: RadioStation
     let isSaved: Bool
     let onPlay: () -> Void
@@ -265,7 +295,10 @@ private struct StationRow: View {
                     .foregroundStyle(isSaved ? .pink : .secondary)
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel(isSaved ? "Remove saved station" : "Save station")
+            .accessibilityLabel(localizedUiText(
+                isSaved ? "Remove saved station" : "Save station",
+                locale: locale
+            ))
         }
         .padding(.vertical, 3)
     }

@@ -19,7 +19,7 @@ struct MusicDiscoveryView: View {
                     }
                     Picker("Language", selection: $model.language) {
                         ForEach(MusicSearchLanguage.allCases) { language in
-                            Text(language.rawValue).tag(language)
+                            Text(LocalizedStringKey(language.rawValue)).tag(language)
                         }
                     }
                     .onChange(of: model.language) { _, _ in Task { await model.search() } }
@@ -54,7 +54,7 @@ struct MusicDiscoveryView: View {
                     }
                 }
 
-                Section(model.query.isEmpty ? "Fresh finds" : "Licensed results") {
+                Section {
                     if model.isLoading && model.tracks.isEmpty {
                         HStack { Spacer(); ProgressView("Searching licensed sources…"); Spacer() }
                             .padding(.vertical, 24)
@@ -74,10 +74,19 @@ struct MusicDiscoveryView: View {
                             )
                         }
                     }
+                } header: {
+                    Text(LocalizedStringKey(model.query.isEmpty ? "Fresh finds" : "Licensed results"))
                 }
 
                 if let error = model.errorMessage {
-                    Section { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                    Section {
+                        Label {
+                            Text(LocalizedStringKey(error))
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle")
+                        }
+                        .foregroundStyle(.red)
+                    }
                 }
             }
             .navigationTitle("Discover")
@@ -206,6 +215,7 @@ struct MusicArtwork: View {
 
 private struct AddTrackToPlaylistView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var library: MusicLibraryStore
     @State private var newPlaylistName = ""
     let track: MusicTrack
@@ -239,7 +249,7 @@ private struct AddTrackToPlaylistView: View {
                     .disabled(newPlaylistName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .navigationTitle("Add “\(track.title)”")
+            .navigationTitle(localizedUiFormat("Add “%@”", locale: locale, arguments: [track.title]))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: dismiss.callAsFunction) } }
         }

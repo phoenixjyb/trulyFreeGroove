@@ -39,6 +39,7 @@ struct MusicPlayerView: View {
 }
 
 private struct MusicNowPlayingHeader: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var player: MusicPlayer
     let track: MusicTrack
 
@@ -52,7 +53,14 @@ private struct MusicNowPlayingHeader: View {
                     .font(.title.bold())
                     .multilineTextAlignment(.center)
                 Text(track.artist).foregroundStyle(.secondary)
-                Label("\(track.providerName) • license verified", systemImage: "checkmark.seal")
+                Label(
+                    localizedUiFormat(
+                        "%@ • license verified",
+                        locale: locale,
+                        arguments: [track.providerName]
+                    ),
+                    systemImage: "checkmark.seal"
+                )
                     .font(.caption)
                     .foregroundStyle(.purple)
             }
@@ -74,6 +82,7 @@ private struct MusicNowPlayingHeader: View {
 }
 
 private struct MusicTransportControls: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var player: MusicPlayer
 
     var body: some View {
@@ -84,7 +93,10 @@ private struct MusicTransportControls: View {
                         .foregroundStyle(player.shuffleEnabled ? Color.purple : Color.gray)
                 }
                 .disabled(player.queue.count < 2)
-                .accessibilityLabel(player.shuffleEnabled ? "Turn shuffle off" : "Turn shuffle on")
+                .accessibilityLabel(localizedUiText(
+                    player.shuffleEnabled ? "Turn shuffle off" : "Turn shuffle on",
+                    locale: locale
+                ))
 
                 Button { player.skip(offset: -1) } label: {
                     Image(systemName: "backward.fill").font(.title2)
@@ -116,7 +128,7 @@ private struct MusicTransportControls: View {
                     Image(systemName: player.repeatMode.systemImage)
                         .foregroundStyle(player.repeatMode == .off ? Color.gray : Color.purple)
                 }
-                .accessibilityLabel(player.repeatMode.accessibilityLabel)
+                .accessibilityLabel(localizedUiText(player.repeatMode.accessibilityLabel, locale: locale))
             }
 
             HStack(spacing: 20) {
@@ -128,7 +140,7 @@ private struct MusicTransportControls: View {
             .font(.subheadline.bold())
 
             if let error = player.errorMessage {
-                Label(error, systemImage: "exclamationmark.triangle")
+                Label(localizedUiText(error, locale: locale), systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.red)
                     .font(.caption)
             }
@@ -226,6 +238,7 @@ private struct MusicQueueRow: View {
 }
 
 struct MusicMiniPlayer: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var player: MusicPlayer
     let track: MusicTrack
     let onOpen: () -> Void
@@ -282,6 +295,12 @@ struct MusicMiniPlayer: View {
     }
 
     private var miniPlayerSubtitle: String {
-        player.queue.count > 1 ? "\(track.artist) • \(player.queue.count) in queue" : track.artist
+        player.queue.count > 1
+            ? localizedUiFormat(
+                "%@ • %ld in queue",
+                locale: locale,
+                arguments: [track.artist, player.queue.count]
+            )
+            : track.artist
     }
 }

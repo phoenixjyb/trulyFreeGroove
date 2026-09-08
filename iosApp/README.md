@@ -2,6 +2,8 @@
 
 The iOS application uses native SwiftUI and AVFoundation while consuming the shared Kotlin Multiplatform domain and playback-policy framework.
 
+The global interface exposes a global EN/简中/繁中 selector above the tab bar. Its choice is stored independently from music, podcast and radio content-language filters; with no saved choice, the app follows the iPhone language and selects Traditional Chinese for Hant, Hong Kong, Macao and Taiwan locales.
+
 ## Requirements
 
 - Full Xcode with the iOS 17 or newer SDK
