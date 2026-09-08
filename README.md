@@ -19,6 +19,7 @@ This repository now contains the existing Android app, a native SwiftUI iOS coun
 - Keep playlists, saved/recent stations, podcast subscriptions, episodes, and playback progress in a Room database. Existing preference-backed playlists and radio data migrate automatically once.
 - Play, pause, and seek within an authorized Jamendo stream.
 - Search internet radio stations by name, browse by country, genre, or category, and filter out stations reported as broken.
+- On Android, open directory-backed Chinese radio shortcuts for 中国大陆, 香港粤语, 台湾省, or 全球中文, and filter stations by Chinese or Cantonese language metadata. The product label 台湾省 maps to Radio Browser's required `TW` directory code.
 - Save favorite stations locally, revisit recently played stations, and use a dedicated internet-radio player with previous/next station switching.
 - Continue playback in the background with Android media controls, lock-screen metadata, audio-focus handling, and safe headphone-disconnect behavior.
 - See whether Radio Browser considered a station online and when it last checked the stream; this does not claim the programme itself is live.

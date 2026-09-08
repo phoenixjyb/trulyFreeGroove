@@ -99,7 +99,7 @@ fun RadioStation.toMediaItem(): MediaItem {
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(name)
-                .setArtist(country.ifBlank { "Internet radio" })
+                .setArtist(countryDisplayName.ifBlank { "Internet radio" })
                 .setAlbumTitle("OpenGroove Radio")
                 .setArtworkUri(faviconUrl.toUriOrNull())
                 .setExtras(extras)

@@ -86,6 +86,8 @@ fun RadioBrowseScreen(
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
     onCountry: (RadioCountry?) -> Unit,
+    onLanguage: (RadioLanguageFilter?) -> Unit,
+    onQuickFilter: (RadioQuickFilter) -> Unit,
     onTag: (String, RadioBrowseMode) -> Unit,
     onClearFilters: () -> Unit,
     onToggleSaved: (RadioStation) -> Unit,
@@ -153,6 +155,19 @@ fun RadioBrowseScreen(
 
         if (listMode == StationListMode.DISCOVER) {
             item {
+                Text("Chinese radio", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "中国大陆、香港粤语、台湾省及全球中文电台",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp,
+                )
+                Spacer(Modifier.height(8.dp))
+                ChineseRadioBrowser(
+                    selectedId = state.selectedQuickFilterId,
+                    onSelect = onQuickFilter,
+                )
+            }
+            item {
                 Text("Browse", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -163,6 +178,11 @@ fun RadioBrowseScreen(
                         selected = browsePanel == RadioBrowseMode.COUNTRY,
                         icon = Icons.Rounded.Language,
                     ) { browsePanel = RadioBrowseMode.COUNTRY }
+                    BrowseButton(
+                        label = "Language",
+                        selected = browsePanel == RadioBrowseMode.LANGUAGE,
+                        icon = Icons.Rounded.Language,
+                    ) { browsePanel = RadioBrowseMode.LANGUAGE }
                     BrowseButton(
                         label = "Genre",
                         selected = browsePanel == RadioBrowseMode.GENRE,
@@ -182,6 +202,10 @@ fun RadioBrowseScreen(
                         onSelect = onCountry,
                         onShowAll = { showCountryDialog = true },
                     )
+                    RadioBrowseMode.LANGUAGE -> LanguageBrowser(
+                        selected = state.selectedLanguage,
+                        onSelect = onLanguage,
+                    )
                     RadioBrowseMode.GENRE -> TagBrowser(
                         options = RadioGenres,
                         selected = state.selectedTag.takeIf { state.mode == RadioBrowseMode.GENRE },
@@ -194,7 +218,7 @@ fun RadioBrowseScreen(
                     )
                     else -> Unit
                 }
-                if (state.selectedCountry != null || state.selectedTag != null) {
+                if (state.selectedCountry != null || state.selectedTag != null || state.selectedLanguage != null) {
                     TextButton(onClick = onClearFilters) { Text("Clear filter") }
                 }
             }
@@ -351,12 +375,46 @@ private fun CountryBrowser(
                 FilterChip(
                     selected = selected?.code == country.code,
                     onClick = { onSelect(country) },
-                    label = { Text("${countryFlag(country.code)} ${country.name}") },
+                    label = { Text("${countryFlag(country.code)} ${country.displayName}") },
                 )
             }
         }
         OutlinedButton(onClick = onShowAll, enabled = countries.isNotEmpty()) {
-            Text(if (selected == null) "All countries" else "${countryFlag(selected.code)} ${selected.name}")
+            Text(if (selected == null) "All countries" else "${countryFlag(selected.code)} ${selected.displayName}")
+        }
+    }
+}
+
+@Composable
+private fun ChineseRadioBrowser(selectedId: String?, onSelect: (RadioQuickFilter) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        ChineseRadioQuickFilters.forEach { filter ->
+            FilterChip(
+                selected = selectedId == filter.id,
+                onClick = { onSelect(filter) },
+                label = { Text(filter.label) },
+                leadingIcon = { Icon(Icons.Rounded.Radio, contentDescription = null, Modifier.size(17.dp)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun LanguageBrowser(selected: RadioLanguageFilter?, onSelect: (RadioLanguageFilter?) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(7.dp),
+    ) {
+        FilterChip(selected = selected == null, onClick = { onSelect(null) }, label = { Text("All languages") })
+        RadioLanguages.forEach { language ->
+            FilterChip(
+                selected = selected?.directoryValue == language.directoryValue,
+                onClick = { onSelect(language) },
+                label = { Text(language.label) },
+            )
         }
     }
 }
@@ -392,7 +450,7 @@ private fun StationCard(
             Column(Modifier.weight(1f)) {
                 Text(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    listOf(station.country, station.language).filter(String::isNotBlank).joinToString(" • "),
+                    listOf(station.countryDisplayName, station.language).filter(String::isNotBlank).joinToString(" • "),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                     maxLines = 1,
@@ -523,7 +581,7 @@ fun RadioPlayerScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                listOf(countryFlag(station.countryCode), station.country, station.language)
+                listOf(countryFlag(station.countryCode), station.countryDisplayName, station.language)
                     .filter(String::isNotBlank).joinToString("  "),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -591,7 +649,7 @@ fun RadioMiniPlayer(
             Column(Modifier.weight(1f)) {
                 Text(station.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    "${if (isBuffering) "CONNECTING" else "STREAM"} • ${station.country}",
+                    "${if (isBuffering) "CONNECTING" else "STREAM"} • ${station.countryDisplayName}",
                     fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.tertiary,
                     maxLines = 1,
@@ -633,7 +691,11 @@ private fun StationArtwork(station: RadioStation, size: Int) {
 private fun CountryDialog(countries: List<RadioCountry>, onSelect: (RadioCountry) -> Unit, onDismiss: () -> Unit) {
     var query by remember { mutableStateOf("") }
     val filtered = remember(query, countries) {
-        countries.filter { it.name.contains(query.trim(), ignoreCase = true) || it.code.contains(query.trim(), ignoreCase = true) }
+        countries.filter {
+            it.name.contains(query.trim(), ignoreCase = true) ||
+                it.displayName.contains(query.trim(), ignoreCase = true) ||
+                it.code.contains(query.trim(), ignoreCase = true)
+        }
     }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -657,7 +719,7 @@ private fun CountryDialog(countries: List<RadioCountry>, onSelect: (RadioCountry
                         ) {
                             Text(countryFlag(country.code), fontSize = 22.sp)
                             Spacer(Modifier.width(10.dp))
-                            Text(country.name, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(country.displayName, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(country.stationCount.toString(), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
                         }
                     }
@@ -669,9 +731,11 @@ private fun CountryDialog(countries: List<RadioCountry>, onSelect: (RadioCountry
 }
 
 private fun radioResultTitle(state: RadioUiState): String {
+    ChineseRadioQuickFilters.firstOrNull { it.id == state.selectedQuickFilterId }?.let { return it.label }
     state.selectedCountry?.let { country ->
-        return "${countryFlag(country.code)} ${country.name}"
+        return "${countryFlag(country.code)} ${country.displayName}"
     }
+    state.selectedLanguage?.let { return it.label }
     state.selectedTag?.let { return it }
     return if (state.query.isNotBlank()) "Results for “${state.query}”" else "Popular stations"
 }

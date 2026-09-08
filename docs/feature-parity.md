@@ -11,6 +11,7 @@ Every product feature has one shared behavior contract and two platform acceptan
 | Local playlists | Track identity and provider/license metadata | Room persistence | Local Codable persistence built and unit-tested on iOS Simulator | Persistence/lifecycle checks on both physical phones |
 | Music queue and playlist playback | Play-all ordering, current item, position, shuffle and repeat semantics | Android Media3 queue, Play next/end, automatic advance, reorder/remove, shuffle/repeat and service-owned restoration built and unit-tested | Single-track playback only; intentionally deferred for the Android-first milestone | Physical Android playback/lifecycle acceptance, then implement the same contract on iOS |
 | Internet radio discovery | Station validity and browse vocabulary | Implemented | Built and unit-tested on iOS Simulator | Physical iPhone search and browsing |
+| Chinese radio discovery | Directory-backed region/language filters; no bundled station URLs | Android shortcuts for 中国大陆, 香港粤语, 台湾省 and 全球中文 plus Chinese/Cantonese filters built and unit-tested | Country browsing only; intentionally deferred for the Android-first milestone | Physical Android directory/playback acceptance, then add the same discovery vocabulary on iOS |
 | Radio playback | Public HTTP(S) stream boundary | Media3 service | AVPlayer and system commands built on iOS Simulator | Physical iPhone background, controls and HLS |
 | Saved and recent stations | Station identity and 20-item recent cap | Room | Local Codable stores built and unit-tested on iOS Simulator | Physical persistence and lifecycle review on both phones |
 | Podcast discovery and feeds | Models, publisher-feed identity and search matching | Implemented; device acceptance open | Apple directory, direct RSS/Atom and publisher metadata built and unit-tested on iOS Simulator | Live directory/feed checks on both physical phones |
@@ -45,6 +46,13 @@ Every product feature has one shared behavior contract and two platform acceptan
 - The service checkpoints the active music queue, current item, position, shuffle and repeat state. Restoration revalidates every track against the existing direct-playback policy and fails closed instead of restoring external-only or unlicensed media.
 - Focused JVM tests cover queue round-trip, position/mode retention, authorization filtering and malformed state. Physical Android playback, automatic advance, queue edits, process relaunch and system controls remain open acceptance gates.
 - This milestone is intentionally Android-first at the user's direction. iOS queue parity remains required before the capability is complete under this ledger.
+
+## Android Chinese radio implementation evidence (2026-09-08)
+
+- The Radio Browser search adapter accepts a language together with an optional country code, while retaining broken-station filtering, popularity ordering and pagination.
+- Quick filters map 中国大陆 to `CN`, 香港粤语 to `HK` plus `cantonese`, 台湾省 to `TW`, and 全球中文 to `chinese`. The requested 台湾省 wording is a product display label; the ISO-style directory code remains unchanged.
+- Live directory checks returned currently reachable samples for all four query shapes. This is catalog evidence only: `lastcheckok=1` does not prove that a programme is genuinely live or that every stream will play on the target phone.
+- Android and shared JVM tests cover combined country/language parameters, Chinese metadata preservation, the 台湾省 label/code boundary and the Hong Kong Cantonese preset. Physical Android search, playback and persistence remain open acceptance gates; iOS discovery parity is intentionally deferred.
 
 ## Current iOS build evidence
 
