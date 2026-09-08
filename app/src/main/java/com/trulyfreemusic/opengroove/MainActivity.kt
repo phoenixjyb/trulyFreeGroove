@@ -41,11 +41,13 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -111,6 +113,7 @@ import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import com.trulyfreemusic.opengroove.model.Track
 import com.trulyfreemusic.opengroove.data.SearchLanguage
+import com.trulyfreemusic.opengroove.localization.UiLanguage
 import com.trulyfreemusic.opengroove.localization.UiLanguagePreferences
 import com.trulyfreemusic.opengroove.localization.UiLanguageSelector
 import com.trulyfreemusic.opengroove.playback.PlaybackCommands
@@ -732,14 +735,6 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                         onToggle = ::togglePlayback,
                     )
                 }
-                UiLanguageSelector(
-                    selected = uiLanguage,
-                    onSelected = { language ->
-                        if (language != uiLanguage) {
-                            (context as? MainActivity)?.let { UiLanguagePreferences.apply(it, language) }
-                        }
-                    },
-                )
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     NavigationBarItem(
                         selected = section == AppSection.DISCOVER,
@@ -798,8 +793,14 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                     isLoading = searchState.isLoading,
                     error = searchState.error,
                     jamendoConfigured = viewModel.jamendoConfigured,
+                    uiLanguage = uiLanguage,
                     onQueryChange = viewModel::setQuery,
                     onLanguageChange = viewModel::setLanguage,
+                    onUiLanguageChange = { language ->
+                        if (language != uiLanguage) {
+                            (context as? MainActivity)?.let { UiLanguagePreferences.apply(it, language) }
+                        }
+                    },
                     onSearch = { viewModel.search() },
                     onPlay = ::play,
                     onAdd = { addTrack = it },
@@ -987,21 +988,40 @@ private fun DiscoverScreen(
     isLoading: Boolean,
     error: String?,
     jamendoConfigured: Boolean,
+    uiLanguage: UiLanguage,
     onQueryChange: (String) -> Unit,
     onLanguageChange: (SearchLanguage) -> Unit,
+    onUiLanguageChange: (UiLanguage) -> Unit,
     onSearch: () -> Unit,
     onPlay: (Track) -> Unit,
     onAdd: (Track) -> Unit,
     onQueue: (Track) -> Unit,
     onOpen: (String) -> Unit,
 ) {
+    var showSettings by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 22.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            Text("OpenGroove", fontSize = 32.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "OpenGroove",
+                    modifier = Modifier.weight(1f),
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                IconButton(onClick = { showSettings = true }) {
+                    Icon(
+                        Icons.Rounded.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             Text(
                 "Music with a clear source.",
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
@@ -1045,6 +1065,60 @@ private fun DiscoverScreen(
         }
         item { Spacer(Modifier.height(12.dp)) }
     }
+
+    if (showSettings) {
+        AppSettingsDialog(
+            uiLanguage = uiLanguage,
+            onUiLanguageChange = onUiLanguageChange,
+            onDismiss = { showSettings = false },
+        )
+    }
+}
+
+@Composable
+private fun AppSettingsDialog(
+    uiLanguage: UiLanguage,
+    onUiLanguageChange: (UiLanguage) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Rounded.Settings, contentDescription = null) },
+        title = { Text("Settings") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                    ) {
+                        Icon(
+                            Icons.Rounded.Language,
+                            contentDescription = null,
+                            modifier = Modifier.padding(9.dp).size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text("Language", fontWeight = FontWeight.Bold)
+                        Text(
+                            "App interface",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 13.sp,
+                        )
+                    }
+                }
+                UiLanguageSelector(
+                    selected = uiLanguage,
+                    onSelected = onUiLanguageChange,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Done") }
+        },
+    )
 }
 
 @Composable

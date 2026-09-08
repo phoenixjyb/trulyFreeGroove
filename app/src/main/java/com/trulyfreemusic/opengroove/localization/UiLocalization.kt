@@ -6,15 +6,10 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.os.LocaleList
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text as MaterialText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalConfiguration
@@ -85,19 +80,16 @@ object UiLanguagePreferences {
 
 @Composable
 fun UiLanguageSelector(selected: UiLanguage, onSelected: (UiLanguage) -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 3.dp) {
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 3.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            UiLanguage.entries.forEach { language ->
-                FilterChip(
-                    selected = language == selected,
-                    onClick = { onSelected(language) },
-                    label = { MaterialText(language.compactLabel, fontSize = 11.sp) },
-                    modifier = Modifier.padding(start = 5.dp),
-                )
-            }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        UiLanguage.entries.forEach { language ->
+            FilterChip(
+                selected = language == selected,
+                onClick = { onSelected(language) },
+                label = { MaterialText(language.compactLabel, fontSize = 12.sp) },
+            )
         }
     }
 }
@@ -170,6 +162,9 @@ internal fun localizeUiText(text: String, language: UiLanguage): String {
 }
 
 private val SIMPLIFIED = mapOf(
+    "Settings" to "设置",
+    "App interface" to "应用界面",
+    "Done" to "完成",
     "Discover" to "发现",
     "Radio" to "电台",
     "Podcasts" to "播客",
@@ -357,6 +352,9 @@ private val SIMPLIFIED = mapOf(
 )
 
 private val TRADITIONAL = SIMPLIFIED + mapOf(
+    "Settings" to "設定",
+    "App interface" to "App 介面",
+    "Done" to "完成",
     "Discover" to "探索",
     "Radio" to "電台",
     "Podcasts" to "Podcast",

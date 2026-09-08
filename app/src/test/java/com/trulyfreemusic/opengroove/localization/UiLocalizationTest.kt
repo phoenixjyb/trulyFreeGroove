@@ -19,6 +19,8 @@ class UiLocalizationTest {
         assertEquals("網絡電台", localizeUiText("Internet Radio", UiLanguage.TRADITIONAL_CHINESE))
         assertEquals("所有国家和地区", localizeUiText("All countries", UiLanguage.SIMPLIFIED_CHINESE))
         assertEquals("所有國家和地區", localizeUiText("All countries", UiLanguage.TRADITIONAL_CHINESE))
+        assertEquals("设置", localizeUiText("Settings", UiLanguage.SIMPLIFIED_CHINESE))
+        assertEquals("設定", localizeUiText("Settings", UiLanguage.TRADITIONAL_CHINESE))
     }
 
     @Test fun dynamicCountsAndSearchTitlesRemainIntact() {
