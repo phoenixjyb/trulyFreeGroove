@@ -2,7 +2,7 @@
 
 The iOS application uses native SwiftUI and AVFoundation while consuming the shared Kotlin Multiplatform domain and playback-policy framework.
 
-The global interface exposes a global EN/简中/繁中 selector above the tab bar. Its choice is stored independently from music, podcast and radio content-language filters; with no saved choice, the app follows the iPhone language and selects Traditional Chinese for Hant, Hong Kong, Macao and Taiwan locales.
+A gear beside the OpenGroove heading opens Settings, where the first row exposes the EN/简中/繁中 interface selector. Its choice is stored independently from music, podcast and radio content-language filters; with no saved choice, the app follows the iPhone language and selects Traditional Chinese for Hant, Hong Kong, Macao and Taiwan locales.
 
 ## Requirements
 

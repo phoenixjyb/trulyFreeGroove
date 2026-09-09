@@ -21,6 +21,7 @@
 		49254CB3D9E44F5468B95A39 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B9E1EF68981E68772252AEC1 /* Localizable.strings */; };
 		4C6F8771AF8D9D39BBB43EB9 /* SavedStationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08DBAD6F63C44B1E15763AC5 /* SavedStationStore.swift */; };
 		536F3975581A8B2F71F03E93 /* RadioDirectory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015D84F2FDA584C2CC3EDE5B /* RadioDirectory.swift */; };
+		547942F882AFC6DC13368AFB /* AppSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECC0104637BCC22A24045347 /* AppSettingsView.swift */; };
 		57BC7C526E9E84A351D3092B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454EAD5B7BED5D682B8A907B /* ContentView.swift */; };
 		5876961D4B8929F119FCAC39 /* MusicModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B23619AFD7797FB7C9B9A1E /* MusicModels.swift */; };
 		69B4EEAA1C0AAC986E3CB718 /* RadioStation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9ECA453F4EEB0D4E677ABC5 /* RadioStation.swift */; };
@@ -96,6 +97,7 @@
 		CCACF86A14523A8D3480AD9B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DD298289D9EC730EB89A42E4 /* JamendoMusicCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JamendoMusicCatalog.swift; sourceTree = "<group>"; };
 		E973F2423573248E30EB7ADE /* AddTrackToQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddTrackToQueueView.swift; sourceTree = "<group>"; };
+		ECC0104637BCC22A24045347 /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
 		F147EFC59E527C75082F1532 /* MusicQueueStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicQueueStore.swift; sourceTree = "<group>"; };
 		F3448DABF46CE091F4A9EA8D /* PodcastBackgroundRefresh.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastBackgroundRefresh.swift; sourceTree = "<group>"; };
 		FC759C38FDE6B5DE51E8C859 /* PodcastPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PodcastPlayer.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 			isa = PBXGroup;
 			children = (
 				E973F2423573248E30EB7ADE /* AddTrackToQueueView.swift */,
+				ECC0104637BCC22A24045347 /* AppSettingsView.swift */,
 				454EAD5B7BED5D682B8A907B /* ContentView.swift */,
 				6E1D04B62BE5AD78EBECF4B7 /* MusicDiscoveryView.swift */,
 				9B65C88A3C5FCFE86350CB2D /* MusicLibraryView.swift */,
@@ -340,6 +343,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22A0A2E562597D25E5B3AE22 /* AddTrackToQueueView.swift in Sources */,
+				547942F882AFC6DC13368AFB /* AppSettingsView.swift in Sources */,
 				57BC7C526E9E84A351D3092B /* ContentView.swift in Sources */,
 				A18B31B1A9B47988492FF031 /* JamendoMusicCatalog.swift in Sources */,
 				0E083FDF54E629BCC2A08D3F /* MusicDiscoveryView.swift in Sources */,

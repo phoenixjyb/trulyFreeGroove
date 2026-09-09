@@ -13,9 +13,23 @@ struct MusicDiscoveryView: View {
         NavigationStack {
             List {
                 Section {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("OpenGroove").font(.largeTitle.weight(.black)).foregroundStyle(.purple)
-                        Text("Music with a clear source.").foregroundStyle(.secondary)
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("OpenGroove").font(.largeTitle.weight(.black)).foregroundStyle(.purple)
+                            Text("Music with a clear source.").foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 8)
+                        Button {
+                            presentedSheet = .settings
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Settings")
                     }
                     Picker("Language", selection: $model.language) {
                         ForEach(MusicSearchLanguage.allCases) { language in
@@ -98,6 +112,7 @@ struct MusicDiscoveryView: View {
                 switch sheet {
                 case let .playlist(track): AddTrackToPlaylistView(track: track)
                 case let .queue(track): AddTrackToQueueView(track: track)
+                case .settings: AppSettingsView()
                 }
             }
         }
@@ -190,11 +205,13 @@ struct MusicTrackRow: View {
 private enum MusicDiscoverySheet: Identifiable {
     case playlist(MusicTrack)
     case queue(MusicTrack)
+    case settings
 
     var id: String {
         switch self {
         case let .playlist(track): "playlist:\(track.providerName):\(track.id)"
         case let .queue(track): "queue:\(track.providerName):\(track.id)"
+        case .settings: "settings"
         }
     }
 }

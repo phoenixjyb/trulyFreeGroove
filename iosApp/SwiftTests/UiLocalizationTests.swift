@@ -35,6 +35,12 @@ func interfaceLanguageSelectionPersistsIndependently() throws {
 func primaryInterfaceCopyLocalizesInBothChineseScripts() {
     #expect(localizedUiText("Discover", locale: Locale(identifier: "zh-Hans")) == "发现")
     #expect(localizedUiText("Discover", locale: Locale(identifier: "zh-Hant")) == "探索")
+    #expect(localizedUiText("Settings", locale: Locale(identifier: "zh-Hans")) == "设置")
+    #expect(localizedUiText("Settings", locale: Locale(identifier: "zh-Hant")) == "設定")
+    #expect(localizedUiText("App interface", locale: Locale(identifier: "zh-Hans")) == "应用界面")
+    #expect(localizedUiText("App interface", locale: Locale(identifier: "zh-Hant")) == "App 介面")
+    #expect(localizedUiText("Done", locale: Locale(identifier: "zh-Hans")) == "完成")
+    #expect(localizedUiText("Done", locale: Locale(identifier: "zh-Hant")) == "完成")
     #expect(localizedUiText(
         "Internet stream • online when checked",
         locale: Locale(identifier: "zh-Hans")
