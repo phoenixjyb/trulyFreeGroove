@@ -62,7 +62,7 @@ The current parity milestone intentionally excludes Android's optional YouTube s
 
 ## Android and iOS interface localization evidence (2026-09-08)
 
-- A right-aligned gear in the OpenGroove header opens an expandable Settings card. Language is its first settings row and exposes EN, 简中 and 繁中 without changing the selected music, podcast, YouTube or radio content filters.
+- On both platforms, a right-aligned gear in the OpenGroove header opens Settings. Language is its first settings row and exposes EN, 简中 and 繁中 without changing the selected music, podcast, YouTube or radio content filters.
 - The selected interface locale is persisted, drives Android's per-app locale on Android 13 and newer, and recreates the activity safely on older supported versions. With no prior choice, the interface follows the device language and uses Traditional Chinese for Hong Kong, Macao, Taiwan or Hant locales.
 - Navigation, discovery, library, radio, podcast, YouTube, playback controls and known application-generated errors have localized Android copy. Provider titles, artist names, station names, podcast metadata, video metadata and user playlist names remain provider/user content rather than translated labels.
 - iOS now follows the same boundary across Discover, Library, Radio, Podcasts and playback controls. It uses the same EN, 简中 and 繁中 choices without changing music, podcast or radio content filters, preserves provider/user content, persists the choice locally and defaults new installs from the device locale, including Hant and Hong Kong/Macao/Taiwan region handling.

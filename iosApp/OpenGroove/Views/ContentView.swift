@@ -29,15 +29,12 @@ struct ContentView: View {
             .tabItem { Label("Library", systemImage: "square.stack.fill") }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            VStack(spacing: 0) {
-                if musicPlayer.isActive, let track = musicPlayer.currentTrack {
-                    MusicMiniPlayer(track: track, onOpen: { showMusicPlayer = true })
-                } else if podcastPlayer.isActive, let episode = podcastPlayer.currentEpisode {
-                    PodcastMiniPlayer(episode: episode, onOpen: { showPodcastPlayer = true })
-                } else if player.isActive, let station = player.currentStation {
-                    RadioMiniPlayer(station: station, onOpen: { showRadioPlayer = true })
-                }
-                UiLanguageSelector()
+            if musicPlayer.isActive, let track = musicPlayer.currentTrack {
+                MusicMiniPlayer(track: track, onOpen: { showMusicPlayer = true })
+            } else if podcastPlayer.isActive, let episode = podcastPlayer.currentEpisode {
+                PodcastMiniPlayer(episode: episode, onOpen: { showPodcastPlayer = true })
+            } else if player.isActive, let station = player.currentStation {
+                RadioMiniPlayer(station: station, onOpen: { showRadioPlayer = true })
             }
         }
         .sheet(isPresented: $showRadioPlayer) {
@@ -62,33 +59,6 @@ struct ContentView: View {
                 musicPlayer.checkpointQueue()
             }
         }
-    }
-}
-
-private struct UiLanguageSelector: View {
-    @EnvironmentObject private var uiLanguage: UiLanguageStore
-
-    var body: some View {
-        Picker(
-            "Interface language",
-            selection: Binding(
-                get: { uiLanguage.selection },
-                set: { uiLanguage.select($0) }
-            )
-        ) {
-            ForEach(UiLanguage.allCases) { language in
-                Text(verbatim: language.compactLabel).tag(language)
-            }
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .frame(maxWidth: 210)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 5)
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .background(.bar)
-        .overlay(alignment: .top) { Divider() }
-        .accessibilityLabel("Interface language")
     }
 }
 
