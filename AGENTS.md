@@ -31,3 +31,7 @@ Source/tests, simulator, installed app, real provider playback and background
 behavior are separate evidence. A feature fix includes local check/repair work;
 device installation, production signing, store release, push or merge require
 authority for that operation. Do not silently change provider/account setup.
+
+## Codex collaboration
+
+Astra owns playback-policy ambiguity, shared contracts, authority, review and integration. Prefer Luna for useful independent slices when the model and delegation are available; honor explicit model choices and keep small tasks with the owner. Luna may take a bounded Android or iOS implementation, discovery, documentation or check with exact write scope and evidence. Suitable slices include tracing one shared playback rule, running affected unit checks, inspecting the changed player flow, or checking feature-parity documentation. Keep one writer per artifact and preserve provider, license, language and privacy boundaries. Existing project constraints and authorization requirements still apply.
