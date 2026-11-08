@@ -1,10 +1,29 @@
 # OpenGroove privacy notice
 
-OpenGroove is a personal, account-free music discovery, internet-radio, and podcast app.
+OpenGroove is a personal music discovery, internet-radio, and podcast app.
 
 ## Data kept on the device
 
 The app stores playlists, saved and recently played radio stations, podcast subscriptions, cached episode metadata, listening progress and played/unplayed state, saved YouTube video references, and player metadata in a local Room database on the Android device. Existing playlist and radio preferences are copied into that database once. Cached YouTube titles, channel names, thumbnails, availability, and related API metadata are refreshed or removed within 30 days. OpenGroove does not operate an account or synchronization service and does not send this library to the developer.
+
+## Optional Home Music
+
+Home Music connects Android directly to a Navidrome server you configure on your
+home network. The server URL, username and password are encrypted with an
+Android Keystore key and stored in the app's backup-excluded private directory.
+Disconnect deletes that saved configuration. Queue/playlist entries retain only
+server/account identity and opaque song references, with titles and artist/album
+metadata; authenticated stream URLs and passwords are never stored there.
+
+Your server receives album requests, search terms, token authentication and audio
+requests, and may retain its own logs/listening records under its configuration.
+OpenGroove does not send this information to the developer. HTTP on home Wi-Fi
+is unencrypted, including metadata, token authentication and audio; use a dedicated
+music password on a trusted LAN, or trusted HTTPS. Token authentication avoids
+sending the raw password but does not make HTTP confidential. No collection is
+uploaded, no audio is cached offline, and no public sharing endpoint is created.
+Home Music metadata is requested only when you use that feature. Audio continues
+through the existing foreground playback service after you leave the screen.
 
 ## Network requests
 

@@ -1,6 +1,7 @@
 package com.trulyfreemusic.opengroove.playback
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Pause
@@ -161,7 +163,16 @@ fun MusicPlayerScreen(
             }
             item {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    AsyncImage(
+                    if (track.artworkUrl.isBlank()) {
+                        Box(
+                            Modifier.size(230.dp).clip(RoundedCornerShape(28.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(Icons.Rounded.Album, contentDescription = null,
+                                modifier = Modifier.size(100.dp), tint = MaterialTheme.colorScheme.secondary)
+                        }
+                    } else AsyncImage(
                         model = track.artworkUrl,
                         contentDescription = "${track.title} artwork",
                         contentScale = ContentScale.Crop,
@@ -172,6 +183,10 @@ fun MusicPlayerScreen(
                     MaterialText(track.artist, color = MaterialTheme.colorScheme.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (track.album.isNotBlank()) {
                         MaterialText(track.album, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                    }
+                    if (track.providerName == "Home Music") {
+                        Text("Home Music • Personal streaming", fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.secondary)
                     }
                     Spacer(Modifier.height(12.dp))
                     Slider(

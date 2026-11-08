@@ -5,6 +5,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class UiLocalizationTest {
+    @Test fun homeMusicKeepsTheTwoChineseInterfacesDistinct() {
+        assertEquals("家庭音乐", localizeUiText("Home Music", UiLanguage.SIMPLIFIED_CHINESE))
+        assertEquals("家庭音樂", localizeUiText("Home Music", UiLanguage.TRADITIONAL_CHINESE))
+        assertEquals("用户名", localizeUiText("Username", UiLanguage.SIMPLIFIED_CHINESE))
+        assertEquals("使用者名稱", localizeUiText("Username", UiLanguage.TRADITIONAL_CHINESE))
+    }
+
     @Test fun localeDefaultsDistinguishEnglishSimplifiedAndTraditionalChinese() {
         assertEquals(UiLanguage.ENGLISH, UiLanguage.fromLocale(Locale.forLanguageTag("en-GB")))
         assertEquals(UiLanguage.SIMPLIFIED_CHINESE, UiLanguage.fromLocale(Locale.forLanguageTag("zh-CN")))

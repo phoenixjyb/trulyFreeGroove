@@ -62,6 +62,7 @@ fun Track.toMediaItem(): MediaItem {
     return MediaItem.Builder()
         .setMediaId("track:$id")
         .setUri(streamUrl)
+        .setMimeType(if (playbackMode == PlaybackMode.HOME_LIBRARY) "audio/mpeg" else null)
         .setMediaMetadata(
             MediaMetadata.Builder()
                 .setTitle(title)

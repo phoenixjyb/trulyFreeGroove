@@ -111,6 +111,8 @@ import androidx.media3.session.SessionToken
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
+import com.trulyfreemusic.opengroove.home.HomeMusicScreen
+import com.trulyfreemusic.opengroove.home.HomeMusicViewModel
 import com.trulyfreemusic.opengroove.model.Track
 import com.trulyfreemusic.opengroove.data.SearchLanguage
 import com.trulyfreemusic.opengroove.localization.UiLanguage
@@ -210,6 +212,9 @@ private enum class AppSection { DISCOVER, YOUTUBE, RADIO, PODCASTS, LIBRARY }
 @Composable
 private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
     val context = LocalContext.current
+    val homeViewModel: HomeMusicViewModel = viewModel()
+    val homeState by homeViewModel.state.collectAsStateWithLifecycle()
+    var showHomeMusic by remember { mutableStateOf(false) }
     val uiLanguage = UiLanguagePreferences.current(context)
     val searchState by viewModel.searchState.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
@@ -358,6 +363,7 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                 playerError = when {
                     currentStation != null -> "This stream is unavailable right now. Retry it or try the next station."
                     currentPodcast != null -> "This podcast episode is unavailable from its publisher right now."
+                    currentTrack?.providerName == "Home Music" -> "Home Music is unavailable. Check home Wi-Fi and the server."
                     else -> "This track is unavailable right now."
                 }
             }
@@ -692,6 +698,8 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
         viewModel.closePodcast()
     }
 
+    BackHandler(enabled = showHomeMusic && !showMusicPlayer) { showHomeMusic = false }
+
     Box(Modifier.fillMaxSize()) {
       Scaffold(
         containerColor = Color.Transparent,
@@ -738,31 +746,31 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                     NavigationBarItem(
                         selected = section == AppSection.DISCOVER,
-                        onClick = { section = AppSection.DISCOVER },
+                        onClick = { showHomeMusic = false; section = AppSection.DISCOVER },
                         icon = { Icon(Icons.Rounded.Home, contentDescription = null) },
                         label = { Text("Discover") },
                     )
                     NavigationBarItem(
                         selected = section == AppSection.YOUTUBE,
-                        onClick = { section = AppSection.YOUTUBE },
+                        onClick = { showHomeMusic = false; section = AppSection.YOUTUBE },
                         icon = { Icon(Icons.Rounded.SmartDisplay, contentDescription = null) },
                         label = { Text("YouTube") },
                     )
                     NavigationBarItem(
                         selected = section == AppSection.RADIO,
-                        onClick = { section = AppSection.RADIO },
+                        onClick = { showHomeMusic = false; section = AppSection.RADIO },
                         icon = { Icon(Icons.Rounded.Radio, contentDescription = null) },
                         label = { Text("Radio") },
                     )
                     NavigationBarItem(
                         selected = section == AppSection.PODCASTS,
-                        onClick = { section = AppSection.PODCASTS },
+                        onClick = { showHomeMusic = false; section = AppSection.PODCASTS },
                         icon = { Icon(Icons.Rounded.Podcasts, contentDescription = null) },
                         label = { Text("Podcasts") },
                     )
                     NavigationBarItem(
                         selected = section == AppSection.LIBRARY,
-                        onClick = { section = AppSection.LIBRARY },
+                        onClick = { showHomeMusic = false; section = AppSection.LIBRARY },
                         icon = { Icon(Icons.Rounded.LibraryMusic, contentDescription = null) },
                         label = { Text("Library") },
                     )
@@ -785,7 +793,23 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                 )
                 .padding(innerPadding),
         ) {
-            when (section) {
+            if (showHomeMusic) {
+                HomeMusicScreen(
+                    state = homeState,
+                    onConnect = homeViewModel::connect,
+                    onDisconnect = {
+                        if (musicQueue.any { it.providerName == "Home Music" }) clearMusicQueue()
+                        homeViewModel.disconnect()
+                    },
+                    onBrowse = homeViewModel::browse,
+                    onQuery = homeViewModel::setQuery,
+                    onSearch = homeViewModel::search,
+                    onAlbum = homeViewModel::openAlbum,
+                    onMore = homeViewModel::loadMore,
+                    onPlay = { tracks, index -> playMusicQueue(tracks, index) },
+                    onQueue = { queueTrack = it },
+                )
+            } else when (section) {
                 AppSection.DISCOVER -> DiscoverScreen(
                     query = searchState.query,
                     language = searchState.language,
@@ -852,7 +876,16 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                     onTogglePlayed = viewModel::togglePodcastPlayed,
                     onOpen = context::openUrl,
                 )
-                AppSection.LIBRARY -> LibraryScreen(
+                AppSection.LIBRARY -> Column {
+                    OutlinedButton(
+                        onClick = { showHomeMusic = true },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+                    ) {
+                        Icon(Icons.Rounded.Home, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Home Music")
+                    }
+                    LibraryScreen(
                     playlists = playlists,
                     onCreate = { showCreatePlaylist = true },
                     onPlay = { tracks, index -> playMusicQueue(tracks, index) },
@@ -860,7 +893,8 @@ private fun OpenGrooveApp(viewModel: MainViewModel = viewModel()) {
                     onQueue = { queueTrack = it },
                     onRemove = viewModel::removeFromPlaylist,
                     onOpen = context::openUrl,
-                )
+                    )
+                }
             }
         }
       }
@@ -1262,12 +1296,16 @@ private fun TrackCard(
                     )
                 }
                 Row {
-                    Text(
-                        "License",
-                        modifier = Modifier.clickable { onOpen(track.licenseUrl) }.padding(vertical = 5.dp),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
+                    if (track.licenseUrl.isNotBlank()) {
+                        Text(
+                            "License",
+                            modifier = Modifier.clickable { onOpen(track.licenseUrl) }.padding(vertical = 5.dp),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    } else if (track.providerName == "Home Music") {
+                        Text("Personal streaming", fontSize = 11.sp)
+                    }
                     Spacer(Modifier.width(12.dp))
                     Text(
                         "Source",

@@ -9,6 +9,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MusicQueuePersistenceTest {
+    @Test fun homeLibraryQueueRestoresWithoutSavingNetworkAuthentication() {
+        val home = track("private", PlaybackMode.HOME_LIBRARY).copy(
+            streamUrl = "home-music://0123456789abcdef0123456789abcdef/song", sourceUrl = "http://192.168.1.2:4533", licenseUrl = "")
+        val snapshot = MusicQueueSnapshot(listOf(home, home), 1, 8000, true, 2)
+        val encoded = encodeMusicQueueSnapshot(snapshot)!!
+        assertEquals(snapshot, decodeMusicQueueSnapshot(encoded))
+        assertFalse(encoded.contains("/rest/stream"))
+        assertFalse(encoded.contains("password"))
+        assertFalse(encoded.contains("?t="))
+    }
+
     @Test fun roundTripRetainsQueuePositionAndPlaybackModes() {
         val snapshot = MusicQueueSnapshot(
             tracks = listOf(track("one"), track("two")),

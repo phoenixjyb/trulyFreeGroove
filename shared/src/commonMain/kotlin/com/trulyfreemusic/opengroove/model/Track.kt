@@ -5,6 +5,8 @@ import com.trulyfreemusic.opengroove.SharedPlaybackPolicy
 enum class PlaybackMode {
     DIRECT_AUTHORIZED,
     EXTERNAL_ONLY,
+    /** Private user library reference; the Android service supplies authentication at read time. */
+    HOME_LIBRARY,
 }
 
 data class Track(

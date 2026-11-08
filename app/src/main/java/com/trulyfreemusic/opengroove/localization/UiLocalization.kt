@@ -162,6 +162,26 @@ internal fun localizeUiText(text: String, language: UiLanguage): String {
 }
 
 private val SIMPLIFIED = mapOf(
+    "Personal streaming" to "个人串流",
+    "Home Music" to "家庭音乐",
+    "Your collection on home Wi-Fi" to "通过家庭 Wi-Fi 播放您的收藏",
+    "Connect to your Navidrome server. Play only music you own or have permission to stream." to "连接您的 Navidrome 服务器。仅播放您拥有或获准串流的音乐。",
+    "Server URL" to "服务器地址",
+    "Username" to "用户名",
+    "Password" to "密码",
+    "Connect" to "连接",
+    "Disconnect" to "断开连接",
+    "Albums" to "专辑",
+    "HTTP is unencrypted. Use a dedicated music password on trusted home Wi-Fi. No port forwarding." to "HTTP 未加密。请在可信的家庭 Wi-Fi 上使用专用音乐密码，不要设置端口转发。",
+    "Private library • Personal streaming" to "私人音乐库 • 个人串流",
+    "Home Music • Personal streaming" to "家庭音乐 • 个人串流",
+    "Search albums, artists and songs" to "搜索专辑、歌手和歌曲",
+    "No music found. Check the server library and scan status." to "未找到音乐，请检查服务器音乐库和扫描状态。",
+    "Home Music sign-in failed. Check the account and password." to "家庭音乐登录失败，请检查账号和密码。",
+    "Home Music server rejected the request." to "家庭音乐服务器拒绝了请求。",
+    "Home Music is unavailable. Check home Wi-Fi and the server." to "家庭音乐无法连接，请检查家庭 Wi-Fi 和服务器。",
+    "Enter a private LAN IPv4 server URL, username and password." to "请输入内网 IPv4 服务器地址、用户名和密码。",
+
     "Settings" to "设置",
     "App interface" to "应用界面",
     "Done" to "完成",
@@ -352,6 +372,26 @@ private val SIMPLIFIED = mapOf(
 )
 
 private val TRADITIONAL = SIMPLIFIED + mapOf(
+    "Personal streaming" to "個人串流",
+    "Home Music" to "家庭音樂",
+    "Your collection on home Wi-Fi" to "透過家庭 Wi-Fi 播放您的收藏",
+    "Connect to your Navidrome server. Play only music you own or have permission to stream." to "連接您的 Navidrome 伺服器。僅播放您擁有或獲准串流的音樂。",
+    "Server URL" to "伺服器網址",
+    "Username" to "使用者名稱",
+    "Password" to "密碼",
+    "Connect" to "連接",
+    "Disconnect" to "中斷連接",
+    "Albums" to "專輯",
+    "HTTP is unencrypted. Use a dedicated music password on trusted home Wi-Fi. No port forwarding." to "HTTP 未加密。請在可信的家庭 Wi-Fi 上使用專用音樂密碼，不要設定連接埠轉送。",
+    "Private library • Personal streaming" to "私人音樂庫 • 個人串流",
+    "Home Music • Personal streaming" to "家庭音樂 • 個人串流",
+    "Search albums, artists and songs" to "搜尋專輯、歌手和歌曲",
+    "No music found. Check the server library and scan status." to "未找到音樂，請檢查伺服器音樂庫和掃描狀態。",
+    "Home Music sign-in failed. Check the account and password." to "家庭音樂登入失敗，請檢查帳號和密碼。",
+    "Home Music server rejected the request." to "家庭音樂伺服器拒絕了請求。",
+    "Home Music is unavailable. Check home Wi-Fi and the server." to "家庭音樂無法連接，請檢查家庭 Wi-Fi 和伺服器。",
+    "Enter a private LAN IPv4 server URL, username and password." to "請輸入內網 IPv4 伺服器網址、使用者名稱和密碼。",
+
     "Settings" to "設定",
     "App interface" to "App 介面",
     "Done" to "完成",

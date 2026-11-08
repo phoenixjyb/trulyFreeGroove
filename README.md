@@ -33,6 +33,35 @@ This repository now contains the existing Android app, a native SwiftUI iOS coun
 
 The app intentionally has no YouTube downloader, stream extractor, hidden player, podcast downloader, or offline audio cache.
 
+## Home Music (Android, home Wi-Fi)
+
+Open **Library → Home Music** to connect to a private Navidrome server. Enter
+its LAN IPv4 URL (for example `http://192.168.1.20:4533`), a playback username,
+and a dedicated password. Browse albums, search albums/artists/songs, play an
+album, or add songs next/last to the existing music queue. Shuffle, repeat,
+reordering, queue restoration, background audio and system media controls use
+the existing Android Media3 service. Disconnect clears credentials and stops an
+active queue containing Home Music. Reconnecting with a different account does
+not grant access to saved references from the previous account.
+
+Credentials are encrypted with Android Keystore and excluded from backup.
+Saved queues contain opaque library references, never authenticated URLs.
+HTTP sends metadata and audio without encryption; use trusted home Wi-Fi and a
+dedicated account, or configure HTTPS with a certificate the phone trusts.
+Only explicit private IPv4 addresses are accepted in this first version. There
+is no Internet discovery, router setup, download, or offline audio cache.
+
+The selected server is **Navidrome**, accessed through OpenSubsonic. MP3 output
+from server-side FFmpeg provides a consistent Android stream for MP3, FLAC,
+WAV, AAC/ALAC-in-M4A, Ogg Vorbis, Opus, WMA and APE sources. AAC and
+AIFF have normalization commands; APE is supported by the preparation path but
+awaits a fixture-based playback check. Whole-CD images with CUE sheets need separate tagged
+tracks prepared without changing originals. See [server preparation, format
+policy and Windows handoff](docs/home-music-server.md). Real collection paths
+are intentionally unset until supplied. Use generated test audio meanwhile.
+Windows installation, service/firewall changes and physical phone installation
+remain separate delivery steps. Home Music is Android-first; iOS is unchanged.
+
 ## Podcasts
 
 Apple's Search API is used only to locate a show's public feed and official catalog page. OpenGroove does not play or cache Apple preview media and does not reuse Apple search-result artwork. After a show is opened, its publisher-controlled RSS or Atom feed supplies the description, artwork, episodes, and public audio enclosure URLs.
@@ -55,7 +84,7 @@ Radio Browser indexes public station URLs but does not grant rights to rebroadca
 
 ## Privacy
 
-OpenGroove has no account, advertising SDK, or analytics. Playlists, saved stations, recent stations, podcast subscriptions, episode metadata, and playback progress are kept on the device. Search terms and normal network metadata are sent only to the selected catalog/directory or to an official external platform opened by the user. See [PRIVACY.md](PRIVACY.md).
+OpenGroove has no developer-operated account service, advertising SDK, or analytics. Optional Home Music uses an account on your own server. Playlists, saved stations, recent stations, podcast subscriptions, episode metadata, and playback progress are kept on the device. Search terms and normal network metadata are sent only to the selected catalog/directory or to an official external platform opened by the user. See [PRIVACY.md](PRIVACY.md).
 
 ## Build
 
@@ -88,7 +117,7 @@ On a Mac with JDK 17, Android SDK 36, full Xcode, and XcodeGen installed, run th
 ./scripts/verify-all.sh
 ```
 
-The script runs the Android unit tests, debug APK build, and lint, then generates the Xcode project and runs the iOS unit tests on an available iPhone simulator. Use `./scripts/verify-all.sh android` or `./scripts/verify-all.sh ios` to run one platform gate. GitHub Actions invokes these same entry points in separate jobs for every pull request and for pushes to `main` or `feature/**` branches.
+The script runs the Android unit tests, debug APK build, and lint, then generates the Xcode project and runs the iOS unit tests on an available iPhone simulator. Use `./scripts/verify-all.sh android` or `./scripts/verify-all.sh ios` to run one platform gate. GitHub Actions is owner-paused for cost. Run these checks locally; do not enable, trigger, rerun, or push changes that would start workflows until the owner resumes GitHub CI.
 
 ## iOS development
 
@@ -98,11 +127,13 @@ Full Xcode and XcodeGen are required to generate and build the iPhone applicatio
 
 ## Provider contract
 
-`Track.isDirectPlaybackAllowed()` is the fail-closed playback boundary. A direct stream must:
+`Track.isDirectPlaybackAllowed()` is the fail-closed playback boundary. A public catalog stream must:
 
 - be marked `DIRECT_AUTHORIZED` by its provider adapter;
 - use HTTPS; and
 - include a license URL.
+
+Private Home Music tracks use a distinct `HOME_LIBRARY` policy: only an opaque `home-music://accountKey/id` reference is accepted. The Android service resolves it through the explicitly configured LAN server and matching account at read time. This personal-library path does not grant permission to stream public catalog or commercial media.
 
 YouTube audiovisual content is never represented as a direct `Track` stream. Android's optional YouTube Watch screen uses the visible official IFrame player and stops when that screen or app is no longer visible. YouTube Music, Spotify, and similar services remain `EXTERNAL_ONLY` unless their official SDK and current terms explicitly grant in-app playback for the intended use. Non-commercial distribution does not waive copyright or provider terms.
 

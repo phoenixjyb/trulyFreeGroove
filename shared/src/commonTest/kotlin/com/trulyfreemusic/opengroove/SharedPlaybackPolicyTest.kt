@@ -6,6 +6,14 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SharedPlaybackPolicyTest {
+    @Test fun privateLibraryRequiresAnOpaqueReferenceAndCannotAuthorizeWebStreams() {
+        assertTrue(SharedPlaybackPolicy.isDirectTrackPlaybackAllowed(PlaybackMode.HOME_LIBRARY,
+            "home-music://0123456789abcdef0123456789abcdef/track", ""))
+        for (url in listOf("http://192.168.1.2/audio.mp3", "https://youtube.example/audio", "home-music://bad/track", "home-music://0123456789abcdef0123456789abcdef/track?t=secret")) {
+            assertFalse(SharedPlaybackPolicy.isDirectTrackPlaybackAllowed(PlaybackMode.HOME_LIBRARY, url, ""))
+        }
+    }
+
     @Test
     fun commercialPlatformHandoffsCannotBecomeDirectStreams() {
         assertFalse(

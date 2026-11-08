@@ -9,6 +9,13 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.ResolvingDataSource
+import android.net.Uri
+import com.trulyfreemusic.opengroove.home.HomeMusicStore
+import com.trulyfreemusic.opengroove.home.HomeMusicClient
+import java.io.IOException
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
@@ -52,7 +59,16 @@ class PlaybackService : MediaSessionService() {
     @androidx.annotation.OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
+        val dataSource = ResolvingDataSource.Factory(DefaultDataSource.Factory(this)) { spec ->
+            if (spec.uri.scheme != "home-music") spec else {
+                val config = HomeMusicStore(this).load() ?: throw IOException("Home Music is disconnected")
+                val url = runCatching { HomeMusicClient(config).streamUrl(spec.uri.toString()) }
+                    .getOrElse { throw IOException("Home Music account changed") }
+                spec.withUri(Uri.parse(url))
+            }
+        }
         val player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSource))
             .setAudioAttributes(AudioAttributes.DEFAULT, true)
             .setHandleAudioBecomingNoisy(true)
             .build()

@@ -14,8 +14,11 @@ object SharedPlaybackPolicy {
         playbackMode: PlaybackMode,
         streamUrl: String,
         licenseUrl: String,
-    ): Boolean = playbackMode == PlaybackMode.DIRECT_AUTHORIZED &&
-        streamUrl.startsWith("https://") && licenseUrl.isPublicHttpUrl()
+    ): Boolean = when (playbackMode) {
+        PlaybackMode.DIRECT_AUTHORIZED -> streamUrl.startsWith("https://") && licenseUrl.isPublicHttpUrl()
+        PlaybackMode.HOME_LIBRARY -> Regex("^home-music://[a-f0-9]{32}/[^/?#]+$").matches(streamUrl)
+        PlaybackMode.EXTERNAL_ONLY -> false
+    }
 
     private fun String.isPublicHttpUrl(): Boolean =
         startsWith("https://") || startsWith("http://")

@@ -1,0 +1,9 @@
+# Copy beside navidrome.exe and replace paths and bind address for the host.
+# Keep the port reachable only on the trusted home Wi-Fi; do not port-forward it.
+Address = "127.0.0.1"
+Port = 4533
+MusicFolder = 'C:\OpenGroove\Music'
+DataFolder = 'C:\OpenGroove\Data'
+CacheFolder = 'C:\OpenGroove\Cache'
+Scanner.Schedule = '@every 1h'
+FFmpegPath = 'C:\ffmpeg\bin\ffmpeg.exe'
