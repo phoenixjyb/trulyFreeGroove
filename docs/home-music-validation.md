@@ -68,3 +68,18 @@ Windows installation/service/firewall changes and physical Android installation
 need separate authorization. Real collection indexing and format/tag/CUE review
 await the folder paths. Physical home Wi-Fi, lock-screen, background battery
 behavior and interruptions still require device acceptance.
+
+## Authorized focused CI
+
+The owner authorized a Home Music CI exception after the implementation push.
+`.github/workflows/home-music.yml` provides one Ubuntu job with an eight-minute
+limit. It runs only on `codex/home-music` when the head commit includes
+`[home-music ci]`. Ordinary pushes do not allocate this job's runner; the
+broader GitHub Actions cost pause remains in place.
+
+The job checks the preparation unit tests, real generated-audio transformations
+(`python3 -m server.tests.smoke_audio`), shared/Android unit tests and a debug APK
+build. The audio smoke decodes 17 generated/prepared files, checks CUE durations
+and tags, verifies AAC/AIFF normalization, and confirms originals are unchanged.
+The existing cross-platform workflow is unchanged. This job is local/server
+software validation and does not install or change a Windows service.
